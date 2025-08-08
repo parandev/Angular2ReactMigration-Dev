@@ -1,0 +1,21 @@
+name: SOMATA API to Dev
+
+on:
+    push:
+        branches: [ Dev ]
+
+jobs:
+    build:
+        runs-on: gha-runner-scale-set-sigopsmetrics
+        steps:
+          - name: setup SSH Keys and known_hosts
+            env:
+              SSH_PRIV_KEY: ${{ secrets.SOM_SSH_PRIV_KEY }}
+            run: |
+              install -m 600 -D /dev/null ~/.ssh/id_rsa
+              echo "$SSH_PRIV_KEY" > ~/.ssh/id_rsa
+              git config --global --add safe.directory /opt/somata/SOMATA-UI
+
+          - name: cleanup and copy files
+            run: |
+              ssh -o StrictHostKeychecking=no somata@vapp-dev-som-01.msc01.nonprod.dot.ga.gov "cd /opt/somata && ./update_somata_ui.sh"

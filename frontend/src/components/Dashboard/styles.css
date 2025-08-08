@@ -1,0 +1,25 @@
+.sidebar {
+    width: 220px;
+    transition: width 0.3s ease;
+    background-color: #fff;
+  }
+  
+  .sidebar.collapsed {
+    width: 60px;
+  }
+  
+  .menu-item {
+    display: flex;
+    align-items: center;
+    padding: 12px;
+  }
+  
+  .menu-item i {
+    font-size: 20px;
+    margin-right: 12px;
+  }
+  
+  .sidebar.collapsed .menu-item span {
+    display: none;
+  }
+  

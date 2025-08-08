@@ -1,0 +1,65 @@
+{
+    "include": [
+      "app"
+    ],
+  
+    "exclude": [
+      "**/node_modules",
+      "**/__pycache__",
+      "frontend",
+      ".venv",
+      "dist",
+      "build"
+    ],
+  
+    "defineConstant": {
+      "DEBUG": true
+    },
+  
+    "reportMissingImports": "error",
+    "reportMissingTypeStubs": false,
+    "reportUnusedImport": "warning",
+    "reportUnusedClass": "warning", 
+    "reportUnusedFunction": "warning",
+    "reportUnusedVariable": "warning",
+    "reportDuplicateImport": "error",
+    "reportOptionalSubscript": "error",
+    "reportOptionalMemberAccess": "error",
+    "reportOptionalCall": "error",
+    "reportOptionalIterable": "error",
+    "reportOptionalContextManager": "error",
+    "reportOptionalOperand": "error",
+    "reportTypedDictNotRequiredAccess": "error",
+    "reportInvalidStringEscapeSequence": "error",
+    "reportAssertAlwaysTrue": "error",
+    "reportSelfClsParameterName": "error",
+    "reportUnsupportedDunderAll": "error",
+    "reportInvalidTypeVarUse": "error",
+    "reportOverlappingOverload": "error",
+    "reportPossiblyUnboundVariable": "error",
+    "reportInconsistentConstructor": "error",
+    "reportIncompatibleMethodOverride": "error",
+    "reportIncompatibleVariableOverride": "error",
+    "reportUndefinedVariable": "error",
+    "reportUnboundVariable": "error",
+    "reportInvalidStubStatement": "error",
+    "reportIncompleteStub": "error",
+    "reportUnnecessaryTypeIgnoreComment": "error",
+    "reportMatchNotExhaustive": "error",
+    
+    "pythonVersion": "3.12",
+    "pythonPlatform": "Linux",
+    
+    "typeCheckingMode": "strict",
+    "useLibraryCodeForTypes": true,
+    "autoImportCompletions": true,
+    "strictListInference": true,
+    "strictDictionaryInference": true,
+    "strictSetInference": true,
+    "strictParameterNoneValue": true,
+    "analyzeUnannotatedFunctions": true,
+    "enableTypeIgnoreComments": true,
+    "venvPath": ".",
+    "venv": ".venv"
+  }
+  
