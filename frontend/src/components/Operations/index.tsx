@@ -260,7 +260,7 @@ export default function Operations() {
   }, [selectedMetricKey, filtersApplied, dispatch]); // Trigger only on Apply button or metric change
 
   // Handle metric tab change
-  const handleMetricChange = useCallback((event: React.SyntheticEvent, newValue: string) => {
+  const handleMetricChange = useCallback((_event: React.SyntheticEvent, newValue: string) => {
     setSelectedMetric(newValue);
     setSelectedLocation(null); // Reset location selection when changing metrics
   }, []);
@@ -355,6 +355,11 @@ export default function Operations() {
   // Handle bar hover in location chart
   const handleLocationHover = useCallback((location: string | null) => {
     setHoveredLocation(location);
+  }, []);
+
+  // Handle bar click in location chart
+  const handleLocationClick = useCallback((location: string | null) => {
+    setSelectedLocation(location);
   }, []);
 
   // Memoize time series chart data
@@ -466,7 +471,7 @@ export default function Operations() {
     if (settings) {
       return (
         <>
-          {settings.ranges.map((range, index) => (
+          {settings.ranges.map((_range, index) => (
             <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }} key={index}>
               <Box sx={{ width: 8, height: 8, bgcolor: settings.legendColors[index], mr: 1, borderRadius: 4 }} />
               <Typography variant="caption">{settings.legendLabels[index]}</Typography>
@@ -647,6 +652,8 @@ export default function Operations() {
                           data={locationBarData}
                           selectedMetric={selectedMetric}
                           onLocationHover={handleLocationHover}
+                          onLocationClick={handleLocationClick}
+                          selectedLocation={selectedLocation}
                           height={500} // Match TimeSeriesChart height for x-axis alignment
                         />
                       )}
@@ -669,6 +676,7 @@ export default function Operations() {
                         selectedMetric={selectedMetric}
                         height={500} // Consistent height for x-axis alignment
                         hoveredLocation={hoveredLocation}
+                        selectedLocation={selectedLocation}
                         // showLegend={!selectedLocation}
                       />
                     )}

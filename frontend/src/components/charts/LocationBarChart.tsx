@@ -20,6 +20,8 @@ interface LocationBarChartProps {
   height?: number;
   width?: string | number;
   onLocationHover?: (location: string | null) => void;
+  onLocationClick?: (location: string | null) => void;
+  selectedLocation?: string | null;
 }
 
 const LocationBarChart: React.FC<LocationBarChartProps> = ({
@@ -27,7 +29,9 @@ const LocationBarChart: React.FC<LocationBarChartProps> = ({
   selectedMetric,
   height = 450, // Default height matches TimeSeriesChart default
   width = "100%",
-  onLocationHover
+  onLocationHover,
+  onLocationClick,
+  selectedLocation
 }) => {
   const mainChartRef = useRef(null);
   const xAxisRef = useRef(null);
@@ -122,6 +126,21 @@ const LocationBarChart: React.FC<LocationBarChartProps> = ({
     }
   };
 
+  const handleClick = (event: Readonly<Plotly.PlotMouseEvent>) => {
+    if (event.points && event.points[0] && onLocationClick) {
+      const point = event.points[0] as Plotly.PlotDatum;
+      if (point.y && typeof point.y === 'string') {
+        const clickedLocation = point.y;
+        // Toggle selection: if clicking the same location, deselect it
+        if (selectedLocation === clickedLocation) {
+          onLocationClick(null);
+        } else {
+          onLocationClick(clickedLocation);
+        }
+      }
+    }
+  };
+
   return (
     <div style={{ 
       width: width, 
@@ -147,9 +166,16 @@ const LocationBarChart: React.FC<LocationBarChartProps> = ({
             yaxis: {
               title: "",
               automargin: true,
-              tickfont: { size: 10 },
+              tickfont: { 
+                size: 10,
+                color: data.y.map(location => 
+                  selectedLocation === location ? '#1976d2' : '#333'
+                )
+              },
               tickmode: "array",
-              ticktext: data.y,
+              ticktext: data.y.map(location => 
+                selectedLocation === location ? `<b>${location}</b>` : location
+              ),
               tickvals: data.y,
               showticklabels: true,
               side: "left",
@@ -174,7 +200,7 @@ const LocationBarChart: React.FC<LocationBarChartProps> = ({
             width: '100%',
             height: 'auto'
           }}
-          onClick={undefined}
+          onClick={handleClick}
           onHover={handleHover}
           onUnhover={handleUnhover}
         />

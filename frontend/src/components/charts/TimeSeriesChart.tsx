@@ -10,6 +10,7 @@ interface TimeSeriesChartProps {
   width?: string | number;
   showLegend?: boolean;
   hoveredLocation?: string | null;
+  selectedLocation?: string | null;
 }
 
 const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
@@ -18,7 +19,8 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   height = 450,
   width = "100%",
   showLegend = false,
-  hoveredLocation
+  hoveredLocation,
+  selectedLocation
 }) => {
 
   const [hoveredTrace, setHoveredTrace] = useState<number | null>(null);
@@ -69,19 +71,39 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 
   // Enhanced data with dynamic line highlighting
   const enhancedData = data.map((trace: Record<string, any>, index: number) => {
-    // Check if this trace should be highlighted based on external hover (location name) or internal hover (trace index)
+    // Check if this trace should be highlighted based on external hover, selection, or internal hover
     const isExternallyHovered = hoveredLocation && trace.name === hoveredLocation;
+    const isSelected = selectedLocation && trace.name === selectedLocation;
     const isInternallyHovered = hoveredTrace === index;
-    const isHighlighted = isExternallyHovered || isInternallyHovered;
-    const hasHover = hoveredLocation !== null || hoveredTrace !== null;
+    const hasInteraction = hoveredLocation !== null || selectedLocation !== null || hoveredTrace !== null;
+    
+    // Priority: selection > hover > normal
+    let lineWidth = 2;
+    let opacity = 1;
+    
+    if (hasInteraction) {
+      if (isSelected) {
+        // Selected location gets thickest line and full opacity
+        lineWidth = 5;
+        opacity = 1;
+      } else if (isExternallyHovered || isInternallyHovered) {
+        // Hovered location gets medium thickness
+        lineWidth = 4;
+        opacity = 1;
+      } else {
+        // Other lines are dimmed
+        lineWidth = 1;
+        opacity = 0.3;
+      }
+    }
     
     return {
       ...trace,
       line: {
         ...trace.line,
-        width: hasHover ? (isHighlighted ? 4 : 1) : 2,
+        width: lineWidth,
       },
-      opacity: hasHover ? (isHighlighted ? 1 : 0.4) : 1,
+      opacity: opacity,
     };
   });
 

@@ -187,7 +187,7 @@ export default function Maintenance() {
   }, [selectedMetricKey, filtersApplied, dispatch]); // Trigger only on Apply button or metric change
 
   // Handle metric tab change
-  const handleMetricChange = useCallback((event: React.SyntheticEvent, newValue: string) => {
+  const handleMetricChange = useCallback((_event: React.SyntheticEvent, newValue: string) => {
     setSelectedMetric(newValue);
     setSelectedLocation(null); // Reset location selection when changing metrics
   }, []);
@@ -195,6 +195,11 @@ export default function Maintenance() {
   // Handle location hover
   const handleLocationHover = useCallback((location: string | null) => {
     setHoveredLocation(location);
+  }, []);
+
+  // Handle location click
+  const handleLocationClick = useCallback((location: string | null) => {
+    setSelectedLocation(location);
   }, []);
 
   // Retry functions for each section
@@ -468,7 +473,7 @@ export default function Maintenance() {
     if (settings) {
       return (
         <>
-          {settings.ranges.map((range, index) => (
+          {settings.ranges.map((_range, index) => (
             <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }} key={index}>
               <Box sx={{ width: 8, height: 8, bgcolor: settings.legendColors[index], mr: 1, borderRadius: 4 }} />
               <Typography variant="caption">{settings.legendLabels[index]}</Typography>
@@ -720,6 +725,8 @@ export default function Maintenance() {
                           data={locationBarData as any}
                           selectedMetric={selectedMetric}
                           onLocationHover={handleLocationHover}
+                          onLocationClick={handleLocationClick}
+                          selectedLocation={selectedLocation}
                           height={500} // Match TimeSeriesChart height for x-axis alignment
                         />
                       )}
@@ -742,6 +749,7 @@ export default function Maintenance() {
                         selectedMetric={selectedMetric}
                         height={500}
                         hoveredLocation={hoveredLocation}
+                        selectedLocation={selectedLocation}
                       />
                     )}
                   </Grid>
