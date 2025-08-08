@@ -97,27 +97,7 @@ export default function Operations() {
   const [hoveredLocation, setHoveredLocation] = useState<string | null>(null)
 
   const commonFilterParams = useSelector(selectFilterParams);
-  
-  // Create a stable key from the actual filter values that matter for API calls
-  const filterKey = useMemo(() => {
-    return JSON.stringify({
-      dateRange: commonFilterParams.dateRange,
-      timePeriod: commonFilterParams.timePeriod,
-      customStart: commonFilterParams.customStart,
-      customEnd: commonFilterParams.customEnd,
-      startTime: commonFilterParams.startTime,
-      endTime: commonFilterParams.endTime,
-      zone_Group: commonFilterParams.zone_Group,
-      zone: commonFilterParams.zone,
-      agency: commonFilterParams.agency,
-      county: commonFilterParams.county,
-      city: commonFilterParams.city,
-      corridor: commonFilterParams.corridor,
-      signalId: commonFilterParams.signalId,
-      priority: commonFilterParams.priority,
-      classification: commonFilterParams.classification
-    });
-  }, [commonFilterParams]);
+  const filtersApplied = useAppSelector(state => state.filter.filtersApplied);
   
   // Redux state
   const dispatch = useAppDispatch();
@@ -161,7 +141,7 @@ export default function Operations() {
         value: item.avg || 0
       }))
       .sort((a: LocationMetric, b: LocationMetric) => a.value - b.value);
-  }, [metricsAverage.data, filterKey]);
+  }, [metricsAverage.data]);
 
   // Memoize processed time series data
   const timeSeriesData = useMemo((): TimeSeriesData[] => {
@@ -188,7 +168,7 @@ export default function Operations() {
         location: (item.corridor as string) || 'Unknown'
       };
     });
-  }, [metricsFilter.data, selectedMetric, filterKey]);
+  }, [metricsFilter.data, selectedMetric]);
 
   // Memoize colors based on sorted order to prevent consecutive same colors
   const locationColors = useMemo(() => {
@@ -226,7 +206,7 @@ export default function Operations() {
     });
     
     return comprehensiveLocationColors;
-  }, [locationMetrics, timeSeriesData, filterKey]);
+  }, [locationMetrics, timeSeriesData]);
 
   // Memoize processed map data
   const mapData = useMemo((): MapPoint[] => {
@@ -259,9 +239,9 @@ export default function Operations() {
           sideStreet: signal.sideStreetName
         };
       });
-  }, [signals, signalsFilterAverage.data, filterKey]);
+  }, [signals, signalsFilterAverage.data]);
 
-  // Fetch data when filters or selected metric changes - using stable dependencies
+  // Fetch data when filters are applied or selected metric changes
   useEffect(() => {
     const params: MetricsFilterRequest = {
       source: "main",
@@ -277,7 +257,7 @@ export default function Operations() {
       filterParams: commonFilterParams 
     }));
     dispatch(fetchMetricsFilter({ params, filterParams: commonFilterParams }));
-  }, [selectedMetricKey, filterKey, dispatch]); // Use stable filterKey instead of filtersApplied
+  }, [selectedMetricKey, filtersApplied, dispatch]); // Trigger only on Apply button or metric change
 
   // Handle metric tab change
   const handleMetricChange = useCallback((event: React.SyntheticEvent, newValue: string) => {

@@ -82,27 +82,7 @@ export default function Maintenance() {
   const [hoveredLocation, setHoveredLocation] = useState<string | null>(null);
 
   const commonFilterParams = useSelector(selectFilterParams);
-  
-  // Create a stable key from the actual filter values that matter for API calls
-  const filterKey = useMemo(() => {
-    return JSON.stringify({
-      dateRange: commonFilterParams.dateRange,
-      timePeriod: commonFilterParams.timePeriod,
-      customStart: commonFilterParams.customStart,
-      customEnd: commonFilterParams.customEnd,
-      startTime: commonFilterParams.startTime,
-      endTime: commonFilterParams.endTime,
-      zone_Group: commonFilterParams.zone_Group,
-      zone: commonFilterParams.zone,
-      agency: commonFilterParams.agency,
-      county: commonFilterParams.county,
-      city: commonFilterParams.city,
-      corridor: commonFilterParams.corridor,
-      signalId: commonFilterParams.signalId,
-      priority: commonFilterParams.priority,
-      classification: commonFilterParams.classification
-    });
-  }, [commonFilterParams]);
+  const filtersApplied = useAppSelector(state => state.filter.filtersApplied);
   // Redux state
   const dispatch = useAppDispatch();
   const { 
@@ -150,7 +130,7 @@ export default function Maintenance() {
         weight: 1
       }))
       .sort((a: LocationMetric, b: LocationMetric) => a.avg - b.avg);
-  }, [metricsAverage.data, filterKey]);
+  }, [metricsAverage.data]);
 
   // Memoize processed time series data
   const timeSeriesData = useMemo((): TimeSeriesData[] => {
@@ -159,7 +139,7 @@ export default function Maintenance() {
     }
     
     return metricsFilter.data as TimeSeriesData[];
-  }, [metricsFilter.data, filterKey]);
+  }, [metricsFilter.data]);
 
   // Memoize processed map data
   const mapData = useMemo((): MapPoint[] => {
@@ -186,9 +166,9 @@ export default function Maintenance() {
         value: metricsMap[signal.signalID || ''] || 0
       }))
       .filter(point => point.value !== 0); // Filter out points with value 0
-  }, [signals, signalsFilterAverage.data, filterKey]);
+  }, [signals, signalsFilterAverage.data]);
 
-  // Fetch data when filters or selected metric changes
+  // Fetch data when filters are applied or selected metric changes
   useEffect(() => {
     const params: MetricsFilterRequest = {
       source: "main",
@@ -204,7 +184,7 @@ export default function Maintenance() {
       filterParams: commonFilterParams 
     }));
     dispatch(fetchMetricsFilter({ params, filterParams: commonFilterParams }));
-  }, [selectedMetricKey, filterKey, dispatch]);
+  }, [selectedMetricKey, filtersApplied, dispatch]); // Trigger only on Apply button or metric change
 
   // Handle metric tab change
   const handleMetricChange = useCallback((event: React.SyntheticEvent, newValue: string) => {
