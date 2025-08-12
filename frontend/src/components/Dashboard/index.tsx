@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSelector } from "react-redux";
 import { fetchAllSignals, fetchStraightAverage, fetchSignalsFilterAverage } from "../../store/slices/metricsSlice";
 import { RootState, store } from "../../store/store";
-import { selectFilterParams } from "../../store/slices/filterSlice";
+import { selectFilterParams } from "../../store/selectors/filterSelectors";
 import Box from "@mui/material/Box"
 import Grid from "@mui/material/Grid"
 import Paper from "@mui/material/Paper"
@@ -26,6 +26,7 @@ import { useAppSelector, useAppDispatch } from '../../hooks/useTypedSelector';
 import { consoledebug } from "../../utils/debug";
 import useDocumentTitle from "../../hooks/useDocumentTitle";
 import ErrorDisplay from '../ErrorDisplay';
+import { useTheme } from "../../contexts/ThemeContext";
 
 interface MetricRow {
   label: string
@@ -151,6 +152,8 @@ const metricToSettingsMap: Record<string, string> = {
 
 export default function Dashboard() {
   useDocumentTitle();
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
   const [displayMetric, setDisplayMetric] = useState("dailyTrafficVolume");
   const [perfMetrics, setPerfMetrics] = useState<MetricRow[]>([]);
   const [volMetrics, setVolMetrics] = useState<MetricRow[]>([]);
@@ -913,7 +916,7 @@ export default function Dashboard() {
                     top: 10, 
                     left: 10, 
                     zIndex: 1000, 
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                    backgroundColor: isDark ? 'rgba(30, 30, 30, 0.9)' : 'rgba(255, 255, 255, 0.9)',
                     borderRadius: 1,
                     p: 1
                   }}>

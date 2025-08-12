@@ -12,6 +12,8 @@ import MenuIcon from "@mui/icons-material/Menu"
 import HelpIcon from "@mui/icons-material/Help"
 import ChatIcon from '@mui/icons-material/Chat'
 import AppsIcon from "@mui/icons-material/Apps"
+import Brightness4Icon from "@mui/icons-material/Brightness4"
+import Brightness7Icon from "@mui/icons-material/Brightness7"
 import Menu from "@mui/material/Menu"
 import MenuItem from "@mui/material/MenuItem"
 import Popover from "@mui/material/Popover"
@@ -21,6 +23,7 @@ import Link from "@mui/material/Link"
 import ContactForm, { ContactFormData } from "../ContactForm"
 import HeaderBanner from "../../assets/images/icon_headerbanner.png"
 import { consoledebug } from "../../utils/debug"
+import { useTheme } from "../../contexts/ThemeContext"
 // Import app icons
 import atspmIcon from "../../assets/images/icon_atspm.png"
 import citrixIcon from "../../assets/images/icon_citrix.png"
@@ -55,6 +58,7 @@ interface AppConfig {
 
 export default function Header({ onSideNavToggle }: HeaderProps) {
   const navigate = useNavigate()
+  const { mode, toggleTheme } = useTheme()
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
   const [contactAnchorEl, setContactAnchorEl] = useState<null | HTMLElement>(null)
   const [helpAnchorEl, setHelpAnchorEl] = useState<null | HTMLElement>(null)
@@ -168,6 +172,13 @@ export default function Header({ onSideNavToggle }: HeaderProps) {
         <Box sx={{ display: 'flex', alignItems: 'center', flexGrow: 1 }}>
           <img src={sigOpsLogo} alt="SigOps Metrics Logo" height="50px" />
         </Box>
+        <IconButton 
+          color="inherit" 
+          onClick={toggleTheme}
+          aria-label={`Switch to ${mode === 'light' ? 'dark' : 'light'} mode`}
+        >
+          {mode === 'light' ? <Brightness4Icon /> : <Brightness7Icon />}
+        </IconButton>
         {appConfig.hasBtnContactUs && (
           <IconButton color="inherit" onClick={handleContactOpen}>
             <ChatIcon />
@@ -221,8 +232,8 @@ export default function Header({ onSideNavToggle }: HeaderProps) {
             horizontal: 'right',
           }}
         >
-          <Paper sx={{ width: 400, maxWidth: '100%', bgcolor: '#FFFFFF', borderRadius: 2 }}>
-            <Typography variant="h6" gutterBottom sx={{ bgcolor: '#1976d2', color: 'white', p: 1, textAlign: 'center' }}>
+          <Paper sx={{ width: 400, maxWidth: '100%', borderRadius: 2 }}>
+            <Typography variant="h6" gutterBottom sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', p: 1, textAlign: 'center' }}>
               About
             </Typography>
             <Box sx={{ p: 1 }}>
@@ -270,7 +281,7 @@ export default function Header({ onSideNavToggle }: HeaderProps) {
           }}
         >
           <Paper sx={{ maxWidth: '100%' }}>
-            <Typography variant="h6" gutterBottom sx={{ bgcolor: '#1976d2', color: 'white', p: 1, textAlign: 'center' }}>
+            <Typography variant="h6" gutterBottom sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', p: 1, textAlign: 'center' }}>
               GDOT Applications
             </Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, p: 1 }}>

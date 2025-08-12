@@ -59,11 +59,11 @@ import {
   fetchSubcorridorsByCorridor,
   fetchPriorities,
   fetchClassifications,
-  selectFilterParams,
   setFiltersApplied
 } from "../../store/slices/filterSlice"
 import { store } from "../../store/store"
 import { consoledebug } from "../../utils/debug"
+import { selectFilterParams } from "../../store/selectors/filterSelectors"
 
 // Date range and aggregation options
 const dateRangeOptions = [
@@ -516,7 +516,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
             <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
               <InputLabel sx={{ fontSize: '0.75rem' }}>Select Region</InputLabel>
               <Select
-                value={selectedSignalGroup}
+                value={Array.isArray(zoneGroups) && zoneGroups.includes(selectedSignalGroup) ? selectedSignalGroup : ''}
                 label="Select Region"
                 onChange={handleAttributeChange(setSignalGroup)}
                 displayEmpty
@@ -524,7 +524,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
                 disabled={loading.zoneGroups}
                 sx={{ '& .MuiSelect-select': { fontSize: '0.75rem' } }}
               >
-                {zoneGroups.map((group) => (
+                {Array.isArray(zoneGroups) && zoneGroups.map((group) => (
                   <MenuItem key={group} value={group} sx={{ fontSize: '0.75rem' }}>{group}</MenuItem>
                 ))}
               </Select>
@@ -534,7 +534,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
             <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
               <InputLabel sx={{ fontSize: '0.75rem' }}>Select District</InputLabel>
               <Select
-                value={selectedDistrict}
+                value={Array.isArray(zones) && zones.includes(selectedDistrict) ? selectedDistrict : ''}
                 label="Select District"
                 onChange={handleAttributeChange(setDistrict)}
                 displayEmpty
@@ -547,7 +547,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
                   <MenuItem disabled sx={{ fontSize: '0.75rem' }}>Loading districts...</MenuItem>
                 ) : (
                   // Sort zones alphabetically
-                  [...zones].sort().map((district) => (
+                  Array.isArray(zones) && [...zones].sort().map((district) => (
                     <MenuItem key={district} value={district} sx={{ fontSize: '0.75rem' }}>{district}</MenuItem>
                   ))
                 )}
@@ -558,7 +558,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
             <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
               <InputLabel sx={{ fontSize: '0.75rem' }}>Select Managing Agency</InputLabel>
               <Select
-                value={selectedAgency}
+                value={Array.isArray(agencies) && agencies.includes(selectedAgency) ? selectedAgency : ''}
                 label="Select Managing Agency"
                 onChange={handleAttributeChange(setAgency)}
                 displayEmpty
@@ -567,7 +567,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
                 sx={{ '& .MuiSelect-select': { fontSize: '0.75rem' } }}
               >
                 <MenuItem value="" sx={{ fontSize: '0.75rem' }}><em>None</em></MenuItem>
-                {agencies.map((agency) => (
+                {Array.isArray(agencies) && agencies.map((agency) => (
                   <MenuItem key={agency} value={agency} sx={{ fontSize: '0.75rem' }}>{agency}</MenuItem>
                 ))}
               </Select>
@@ -577,7 +577,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
             <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
               <InputLabel sx={{ fontSize: '0.75rem' }}>Select County</InputLabel>
               <Select
-                value={selectedCounty}
+                value={Array.isArray(counties) && counties.includes(selectedCounty) ? selectedCounty : ''}
                 label="Select County"
                 onChange={handleAttributeChange(setCounty)}
                 displayEmpty
@@ -586,7 +586,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
                 sx={{ '& .MuiSelect-select': { fontSize: '0.75rem' } }}
               >
                 <MenuItem value="" sx={{ fontSize: '0.75rem' }}><em>None</em></MenuItem>
-                {counties.map((county) => (
+                {Array.isArray(counties) && counties.map((county) => (
                   <MenuItem key={county} value={county} sx={{ fontSize: '0.75rem' }}>{county}</MenuItem>
                 ))}
               </Select>
@@ -596,7 +596,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
             <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
               <InputLabel sx={{ fontSize: '0.75rem' }}>Select City</InputLabel>
               <Select
-                value={selectedCity}
+                value={Array.isArray(cities) && cities.includes(selectedCity) ? selectedCity : ''}
                 label="Select City"
                 onChange={handleAttributeChange(setCity)}
                 displayEmpty
@@ -605,7 +605,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
                 sx={{ '& .MuiSelect-select': { fontSize: '0.75rem' } }}
               >
                 <MenuItem value="" sx={{ fontSize: '0.75rem' }}><em>None</em></MenuItem>
-                {cities.map((city) => (
+                {Array.isArray(cities) && cities.map((city) => (
                   <MenuItem key={city} value={city} sx={{ fontSize: '0.75rem' }}>{city}</MenuItem>
                 ))}
               </Select>
@@ -615,7 +615,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
             <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
               <InputLabel sx={{ fontSize: '0.75rem' }}>Select Corridor</InputLabel>
               <Select
-                value={selectedCorridor}
+                value={Array.isArray(corridors) && corridors.includes(selectedCorridor) ? selectedCorridor : ''}
                 label="Select Corridor"
                 onChange={handleAttributeChange(setCorridor)}
                 displayEmpty
@@ -624,7 +624,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
                 sx={{ '& .MuiSelect-select': { fontSize: '0.75rem' } }}
               >
                 <MenuItem value="" sx={{ fontSize: '0.75rem' }}><em>None</em></MenuItem>
-                {corridors.map((corridor) => (
+                {Array.isArray(corridors) && corridors.map((corridor) => (
                   <MenuItem key={corridor} value={corridor} sx={{ fontSize: '0.75rem' }}>{corridor}</MenuItem>
                 ))}
               </Select>
@@ -635,7 +635,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
               <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
                 <InputLabel sx={{ fontSize: '0.75rem' }}>Select Subcorridor</InputLabel>
                 <Select
-                  value={selectedSubcorridor}
+                  value={Array.isArray(subcorridors) && subcorridors.includes(selectedSubcorridor) ? selectedSubcorridor : ''}
                   label="Select Subcorridor"
                   onChange={handleAttributeChange(setSubcorridor)}
                   displayEmpty
@@ -644,7 +644,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
                   sx={{ '& .MuiSelect-select': { fontSize: '0.75rem' } }}
                 >
                   <MenuItem value="" sx={{ fontSize: '0.75rem' }}><em>None</em></MenuItem>
-                  {subcorridors.map((sub) => (
+                  {Array.isArray(subcorridors) && subcorridors.map((sub) => (
                     <MenuItem key={sub} value={sub} sx={{ fontSize: '0.75rem' }}>{sub}</MenuItem>
                   ))}
                 </Select>
@@ -655,7 +655,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
             <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
               <InputLabel sx={{ fontSize: '0.75rem' }}>Select Priority</InputLabel>
               <Select
-                value={selectedPriority}
+                value={Array.isArray(priorities) && priorities.includes(selectedPriority) ? selectedPriority : ''}
                 label="Select Priority"
                 onChange={handleAttributeChange(setPriority)}
                 displayEmpty
@@ -664,7 +664,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
                 sx={{ '& .MuiSelect-select': { fontSize: '0.75rem' } }}
               >
                 <MenuItem value="" sx={{ fontSize: '0.75rem' }}><em>None</em></MenuItem>
-                {priorities.map((priority) => (
+                {Array.isArray(priorities) && priorities.map((priority) => (
                   <MenuItem key={priority} value={priority} sx={{ fontSize: '0.75rem' }}>{priority}</MenuItem>
                 ))}
               </Select>
@@ -674,7 +674,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
             <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
               <InputLabel sx={{ fontSize: '0.75rem' }}>Select Classification</InputLabel>
               <Select
-                value={selectedClassification}
+                value={Array.isArray(classifications) && classifications.includes(selectedClassification) ? selectedClassification : ''}
                 label="Select Classification"
                 onChange={handleAttributeChange(setClassification)}
                 displayEmpty
@@ -683,7 +683,7 @@ export default function FilterSidebar({ open, width, onClose, onApplyFilter }: F
                 sx={{ '& .MuiSelect-select': { fontSize: '0.75rem' } }}
               >
                 <MenuItem value="" sx={{ fontSize: '0.75rem' }}><em>None</em></MenuItem>
-                {classifications.map((cls) => (
+                {Array.isArray(classifications) && classifications.map((cls) => (
                   <MenuItem key={cls} value={cls} sx={{ fontSize: '0.75rem' }}>{cls}</MenuItem>
                 ))}
               </Select>

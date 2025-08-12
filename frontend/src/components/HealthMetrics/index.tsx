@@ -37,6 +37,7 @@ import useDocumentTitle from '../../hooks/useDocumentTitle';
 import LocationBarChart from '../charts/LocationBarChart';
 import TimeSeriesChart from '../charts/TimeSeriesChart';
 import ErrorDisplay from '../ErrorDisplay';
+import { useTheme } from '../../contexts/ThemeContext';
 
 interface TabPanelProps {
     children?: React.ReactNode;
@@ -171,6 +172,8 @@ function TabPanel(props: TabPanelProps) {
 const RegionStatus = () => {
     const dispatch = useDispatch<AppDispatch>();
     const regionsState = useSelector((state: RootState) => state.metrics.regions);
+    const { mode } = useTheme();
+    const isDark = mode === 'dark';
 
     useEffect(() => {
         const currentDate = new Date();
@@ -373,7 +376,7 @@ const RegionStatus = () => {
                             </Typography>
                         </Box>
                     </div>
-                    <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.9rem', lg: '1rem' }, color: 'navy' }}>Operation</Typography>
+                    <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.9rem', lg: '1rem' }, color: isDark ? '#90caf9' : 'navy' }}>Operation</Typography>
                 </StatusCircle>
                 <StatusCircle color={getStatusColor(region?.maintenance)}>
                     <div className="progress-wrapper">
@@ -421,7 +424,7 @@ const RegionStatus = () => {
                             </Typography>
                         </Box>
                     </div>
-                    <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.9rem', lg: '1rem' }, color: 'navy' }}>Maintenance</Typography>
+                    <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.9rem', lg: '1rem' }, color: isDark ? '#90caf9' : 'navy' }}>Maintenance</Typography>
                 </StatusCircle>
                 <StatusCircle color={getStatusColor(region?.safety)}>
                     <div className="progress-wrapper">
@@ -469,7 +472,7 @@ const RegionStatus = () => {
                             </Typography>
                         </Box>
                     </div>
-                    <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.9rem', lg: '1rem' }, color: 'navy' }}>Safety</Typography>
+                    <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.9rem', lg: '1rem' }, color: isDark ? '#90caf9' : 'navy' }}>Safety</Typography>
                 </StatusCircle>
             </Box>
         </Box>

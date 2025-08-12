@@ -3,6 +3,7 @@
 import type React from "react"
 
 import { useLocation, useNavigate } from "react-router-dom"
+import { useTheme as useMuiTheme } from "@mui/material/styles"
 import Drawer from "@mui/material/Drawer"
 import List from "@mui/material/List"
 import ListItem from "@mui/material/ListItem"
@@ -41,6 +42,7 @@ interface NavItem {
 export default function SideNav({ open = true, expanded = true, width, onMouseEnter, onMouseLeave }: SideNavProps) {
   const location = useLocation()
   const navigate = useNavigate()
+  const theme = useMuiTheme()
 
   // Use either open or expanded prop for backward compatibility
   const isOpen = open
@@ -73,9 +75,10 @@ export default function SideNav({ open = true, expanded = true, width, onMouseEn
           width: width,
           boxSizing: "border-box",
           overflowX: "hidden",
-          backgroundColor: '#ffffff', // Light grey similar to GDOT original
-          color: '#333333', 
+          backgroundColor: theme.palette.background.paper,
+          color: theme.palette.text.primary, 
           transition: 'width 0.3s ease-in-out',
+          borderRight: `1px solid ${theme.palette.divider}`,
         },
       }}
     >
@@ -91,15 +94,15 @@ export default function SideNav({ open = true, expanded = true, width, onMouseEn
                   justifyContent: isExpanded ? 'initial' : 'center',
                   minHeight: 48,
                   px: 2,
-                  backgroundColor: location.pathname === item.path ? '#eeeeee' : 'transparent',
+                  backgroundColor: location.pathname === item.path ? theme.palette.action.selected : 'transparent',
                   transition: 'all 0.3s ease-in-out',
                   '&.Mui-selected': {
-                    backgroundColor: '#eeeeee',
+                    backgroundColor: theme.palette.action.selected,
                     fontWeight: 600,
-                    color: '#000',
+                    color: theme.palette.text.primary,
                   },
                   '&:hover': {
-                    backgroundColor: '#f5f5f5',
+                    backgroundColor: theme.palette.action.hover,
                   }, 
                 }}
               >
@@ -107,7 +110,7 @@ export default function SideNav({ open = true, expanded = true, width, onMouseEn
                   minWidth: isExpanded ? 56 : 56, // Keep consistent width
                   mr: isExpanded ? 3 : 0, // Smooth margin transition
                   justifyContent: 'center',
-                  color: '#444',
+                  color: theme.palette.text.secondary,
                   transition: 'all 0.3s ease-in-out',
                 }}>
                   {item.icon}

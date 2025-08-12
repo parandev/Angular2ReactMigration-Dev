@@ -13,6 +13,8 @@ import Plot from "react-plotly.js"
 import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew"
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos"
 import IconButton from "@mui/material/IconButton"
+import { useTheme } from "../../contexts/ThemeContext"
+import { mergeWithPlotlyTheme } from "../../utils/plotlyTheme"
 
 // Mock data for tasks
 const taskMetrics = {
@@ -45,6 +47,9 @@ const taskTypes = [
 ]
 
 export default function TeamsTask() {
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
+  
   // const [dateRange, setDateRange] = useState("priorYear")
   // const [dateAggregation, setDateAggregation] = useState("monthly")
   // const [region, setRegion] = useState("centralMetro")
@@ -169,19 +174,21 @@ export default function TeamsTask() {
         <Plot
           data={taskTrendData as any}
           layout={{
-            autosize: true,
-            height: 350,
-            margin: { l: 50, r: 20, t: 20, b: 50 },
-            barmode: "group",
-            xaxis: {
-              title: "",
-              tickangle: -45,
-            },
-            yaxis: {
-              title: "",
-              range: [0, 900],
-            },
-            showlegend: false,
+            ...mergeWithPlotlyTheme({
+              autosize: true,
+              height: 350,
+              margin: { l: 50, r: 20, t: 20, b: 50 },
+              barmode: "group",
+              xaxis: {
+                title: "",
+                tickangle: -45,
+              },
+              yaxis: {
+                title: "",
+                range: [0, 900],
+              },
+              showlegend: false,
+            }, {}, isDark).layout
           }}
           style={{ width: "100%" }}
         />
@@ -207,17 +214,19 @@ export default function TeamsTask() {
         <Plot
           data={[taskTypesData as any]}
           layout={{
-            autosize: true,
-            height: 350,
-            margin: { l: 150, r: 50, t: 20, b: 50 },
-            yaxis: {
-              title: "",
-              automargin: true,
-            },
-            xaxis: {
-              title: "",
-              showticklabels: false,
-            },
+            ...mergeWithPlotlyTheme({
+              autosize: true,
+              height: 350,
+              margin: { l: 150, r: 50, t: 20, b: 50 },
+              yaxis: {
+                title: "",
+                automargin: true,
+              },
+              xaxis: {
+                title: "",
+                showticklabels: false,
+              },
+            }, {}, isDark).layout
           }}
           style={{ width: "100%" }}
         />

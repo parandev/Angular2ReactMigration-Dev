@@ -1,7 +1,8 @@
 .sidebar {
     width: 220px;
-    transition: width 0.3s ease;
-    background-color: #fff;
+    transition: width 0.3s ease, background-color 0.3s ease;
+    background-color: var(--surface-color);
+    border-right: 1px solid var(--border-color);
   }
   
   .sidebar.collapsed {
@@ -12,6 +13,12 @@
     display: flex;
     align-items: center;
     padding: 12px;
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  .menu-item:hover {
+    background-color: var(--hover-color);
   }
   
   .menu-item i {

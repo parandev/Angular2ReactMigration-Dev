@@ -1,6 +1,6 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import filterApi from '../../services/api/filterApi';
-import { RootState } from '../../store';
+import { RootState } from '../store';
 import { FilterParams } from '../../types/api.types';
 import { consoledebug } from '../../utils/debug';
 
@@ -668,24 +668,4 @@ export const {
 
 export default filterSlice.reducer;
 
-export const selectFilterParams = (state: RootState): FilterParams => {
-  const filter = state.filter;
-  return {
-    dateRange: parseInt(filter.selectedDateOption),
-    timePeriod: parseInt(filter.selectedAggregationOption),
-    customStart: filter.startDate,
-    customEnd: filter.endDate,
-    daysOfWeek: null, // Add if needed
-    startTime: filter.allDayChecked ? null : filter.startTime,
-    endTime: filter.allDayChecked ? null : filter.endTime,
-    zone_Group: filter.selectedSignalGroup,
-    zone: filter.selectedDistrict || null,
-    agency: filter.selectedAgency || null,
-    county: filter.selectedCounty || null,
-    city: filter.selectedCity || null,
-    corridor: filter.selectedCorridor || null,
-    signalId: filter.signalId,
-    priority: filter.selectedPriority,
-    classification: filter.selectedClassification
-  };
-}; 
+// Remove duplicate selector - use the one in filterSelectors.ts instead 

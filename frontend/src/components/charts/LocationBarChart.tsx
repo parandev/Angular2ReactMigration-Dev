@@ -1,6 +1,8 @@
 import React, { useRef, useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
 import { chartTitles } from '../../constants/mapData';
+import { useTheme } from '../../contexts/ThemeContext';
+import { mergeWithPlotlyTheme } from '../../utils/plotlyTheme';
 
 interface LocationBarData {
   x: number[];
@@ -36,6 +38,8 @@ const LocationBarChart: React.FC<LocationBarChartProps> = ({
   const mainChartRef = useRef(null);
   const xAxisRef = useRef(null);
   const [xRange, setXRange] = useState<[number, number]>([0, 100]);
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
 
   const getAxisTitle = () => {
     switch (selectedMetric) {
@@ -141,11 +145,14 @@ const LocationBarChart: React.FC<LocationBarChartProps> = ({
     }
   };
 
+  const containerBgColor = isDark ? '#121212' : '#ffffff';
+  const borderColor = isDark ? '#333333' : '#e0e0e0';
+  
   return (
     <div style={{ 
       width: width, 
       height: totalHeight, // Use passed height (450px for Operations, 500px for Maintenance)
-      backgroundColor: 'white',
+      backgroundColor: containerBgColor,
       display: 'flex',
       flexDirection: 'column'
     }}>
@@ -160,36 +167,36 @@ const LocationBarChart: React.FC<LocationBarChartProps> = ({
           ref={mainChartRef}
           data={[plotData]}
           layout={{
-            height: chartHeight,
-            autosize: true, // Make it responsive
-            margin: { l: 150, r: 10, t: 20, b: 0 }, // No bottom margin = no x-axis
-            yaxis: {
-              title: "",
-              automargin: true,
-              tickfont: { 
-                size: 10,
-                color: data.y.map(location => 
-                  selectedLocation === location ? '#1976d2' : '#333'
-                )
+            ...mergeWithPlotlyTheme({
+              height: chartHeight,
+              autosize: true, // Make it responsive
+              margin: { l: 150, r: 10, t: 20, b: 0 }, // No bottom margin = no x-axis
+              yaxis: {
+                title: "",
+                automargin: true,
+                tickfont: { 
+                  size: 10,
+                  color: data.y.map(location => 
+                    selectedLocation === location ? (isDark ? '#90caf9' : '#1976d2') : (isDark ? '#ffffff' : '#333')
+                  )
+                },
+                tickmode: "array",
+                ticktext: data.y.map(location => 
+                  selectedLocation === location ? `<b>${location}</b>` : location
+                ),
+                tickvals: data.y,
+                showticklabels: true,
+                side: "left",
+                fixedrange: true
               },
-              tickmode: "array",
-              ticktext: data.y.map(location => 
-                selectedLocation === location ? `<b>${location}</b>` : location
-              ),
-              tickvals: data.y,
-              showticklabels: true,
-              side: "left",
-              fixedrange: true
-            },
-            xaxis: { 
-              visible: false, 
-              fixedrange: true,
-              range: xRange
-            },
-            bargap: 0.15,
-            showlegend: false,
-            plot_bgcolor: "white",
-            paper_bgcolor: "white"
+              xaxis: { 
+                visible: false, 
+                fixedrange: true,
+                range: xRange
+              },
+              bargap: 0.15,
+              showlegend: false,
+            }, {}, isDark).layout
           }}
           config={{ 
             staticPlot: false,
@@ -211,7 +218,7 @@ const LocationBarChart: React.FC<LocationBarChartProps> = ({
         height: xAxisHeight, // 50px to match TimeSeriesChart bottom margin
         width: '100%', // Use full container width
         overflow: 'hidden',
-        borderTop: '1px solid #e0e0e0',
+        borderTop: `1px solid ${borderColor}`,
         flexShrink: 0 // Don't shrink this section
       }}>
         <Plot
@@ -225,23 +232,23 @@ const LocationBarChart: React.FC<LocationBarChartProps> = ({
             hoverinfo: 'none'
           }]}
           layout={{
-            height: xAxisHeight,
-            autosize: true, // Make it responsive
-            margin: { l: 150, r: 10, t: 0, b: 50 }, // Same left margin as main chart, bottom for axis title
-            yaxis: { visible: false },
-            xaxis: { 
-              range: xRange, 
-              fixedrange: true,
-              title: {
-                text: chartTitles[selectedMetric as keyof typeof chartTitles]?.["locationBarChartTitle"] || getAxisTitle(),
-                standoff: 20,
+            ...mergeWithPlotlyTheme({
+              height: xAxisHeight,
+              autosize: true, // Make it responsive
+              margin: { l: 150, r: 10, t: 0, b: 50 }, // Same left margin as main chart, bottom for axis title
+              yaxis: { visible: false },
+              xaxis: { 
+                range: xRange, 
+                fixedrange: true,
+                title: {
+                  text: chartTitles[selectedMetric as keyof typeof chartTitles]?.["locationBarChartTitle"] || getAxisTitle(),
+                  standoff: 20,
+                },
+                dtick: getDtick(),
+                tickformat: getTickFormat()
               },
-              dtick: getDtick(),
-              tickformat: getTickFormat()
-            },
-            showlegend: false,
-            plot_bgcolor: "white",
-            paper_bgcolor: "white"
+              showlegend: false,
+            }, {}, isDark).layout
           }}
           config={{ 
             staticPlot: true, 

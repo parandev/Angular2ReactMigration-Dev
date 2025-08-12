@@ -9,7 +9,7 @@ import { fetchSummaryTrends } from '../../store/slices/summaryTrendSlice';
 import { FilterParams } from '../../types/api.types';
 import AppConfig from '../../utils/appConfig';
 import { useSelector } from 'react-redux';
-import { selectFilterParams } from '../../store/slices/filterSlice';
+import { selectFilterParams } from '../../store/selectors/filterSelectors';
 import { RootState } from '../../store/store';
 import useDocumentTitle from '../../hooks/useDocumentTitle';
 import ErrorDisplay from '../ErrorDisplay';

@@ -26,7 +26,7 @@ import {
 } from '../../store/slices/metricsSlice'
 import { MetricsFilterRequest } from '../../types/api.types'
 import { useSelector } from "react-redux"
-import { selectFilterParams } from "../../store/slices/filterSlice"
+import { selectFilterParams } from "../../store/selectors/filterSelectors"
 import { chartTitles } from "../../constants/mapData"
 import useDocumentTitle from "../../hooks/useDocumentTitle"
 

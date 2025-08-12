@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import Plot from 'react-plotly.js';
 import { chartTitles } from '../../constants/mapData';
 import { consoledebug } from '../../utils/debug';
+import { useTheme } from '../../contexts/ThemeContext';
+import { mergeWithPlotlyTheme } from '../../utils/plotlyTheme';
 
 interface TimeSeriesChartProps {
   data: any[];
@@ -24,6 +26,8 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
 }) => {
 
   const [hoveredTrace, setHoveredTrace] = useState<number | null>(null);
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
 
   const getDtick = () => {
     switch (selectedMetric) {
@@ -108,37 +112,38 @@ const TimeSeriesChart: React.FC<TimeSeriesChartProps> = ({
   });
 
   consoledebug('chartTitles', selectedMetric)
+  
+  const customLayout = {
+    autosize: true,
+    height,
+    margin: { l: 50, r: 10, t: 10, b: 50 },
+    xaxis: { 
+      title: {
+        text: chartTitles[selectedMetric as keyof typeof chartTitles]["timeSeriesChartTitle"],
+        standoff: 40,
+      },
+      // tickangle: -45,
+      automargin: true,
+    },
+    yaxis: {
+      dtick: getDtick(),
+      tickformat: getTickFormat(),
+      range: getRange(),
+      autorange: getAutorange(),
+      automargin: true,
+    },
+    showlegend: showLegend,
+    legend: { x: 0, y: 1 },
+    hovermode: 'closest' as const,
+  };
+
+  const { layout, config } = mergeWithPlotlyTheme(customLayout, {}, isDark);
+  
   return (
     <Plot
       data={enhancedData}
-      layout={{
-        autosize: true,
-        height,
-        margin: { l: 50, r: 10, t: 10, b: 50 },
-        xaxis: { 
-          title: {
-            text: chartTitles[selectedMetric as keyof typeof chartTitles]["timeSeriesChartTitle"],
-            standoff: 40,
-          },
-          // tickangle: -45,
-          automargin: true,
-        },
-        yaxis: {
-          dtick: getDtick(),
-          tickformat: getTickFormat(),
-          range: getRange(),
-          autorange: getAutorange(),
-          automargin: true,
-        },
-        showlegend: showLegend,
-        legend: { x: 0, y: 1 },
-        hovermode: 'closest',
-      }}
-      config={{
-        modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
-        displaylogo: false,
-        responsive: true,
-      }}
+      layout={layout}
+      config={config}
       style={{ width, height: "100%" }}
       onHover={handleHover}
       onUnhover={handleUnhover}

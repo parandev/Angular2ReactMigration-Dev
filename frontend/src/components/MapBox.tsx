@@ -8,6 +8,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchAllSignals } from "../store/slices/metricsSlice";
 import { AppDispatch } from "../store/store";
 import { format } from "date-fns";
+import { useTheme } from "../contexts/ThemeContext";
+import { mergeWithPlotlyTheme } from "../utils/plotlyTheme";
 
 export interface MapPoint {
   lat: number;
@@ -103,18 +105,19 @@ const MapBox: FC<MapBoxProps> = ({
   mapOptions = {},
   // filter = {}
 }) => {
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
+  
+  // Use theme-appropriate map style
+  const themeMapStyle = isDark ? "carto-darkmatter" : mapStyle;
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const plotRef = useRef<any>(null);
   const dispatch: AppDispatch = useDispatch();
   const signals = useSelector((state: any) => state.metrics.signals);
   const [mapData, setMapData] = useState<MapTrace[]>([]);
-  const [mapLayout, setMapLayout] = useState<any>({
-    dragmode: "zoom",
-    map: {
-      style: mapStyle,
-      center: center,
-      zoom: zoom
-    },
+  const baseLayout = {
+    dragmode: "zoom" as const,
     margin: { r: 0, t: 0, b: 0, l: 0 },
     autosize: true,
     xaxis: {
@@ -123,7 +126,21 @@ const MapBox: FC<MapBoxProps> = ({
     yaxis: {
       zeroline: false,
     }
-  });
+  };
+  
+  const themeConfig = mergeWithPlotlyTheme(baseLayout, {}, isDark);
+  
+  // Add map-specific properties that aren't part of standard Layout
+  const mapLayoutWithTheme = {
+    ...themeConfig.layout,
+    map: {
+      style: themeMapStyle,
+      center: center,
+      zoom: zoom
+    }
+  };
+  
+  const [mapLayout, setMapLayout] = useState<any>(mapLayoutWithTheme);
 
   // Separate useEffect for calculating center and zoom to avoid infinite loops
   const [autoCenter, setAutoCenter] = useState<{lat: number, lon: number} | null>(null);
@@ -191,6 +208,18 @@ const MapBox: FC<MapBoxProps> = ({
       }));
     }
   }, [showLegend, showControls, center, zoom]);
+
+  // Update map style when theme changes
+  useEffect(() => {
+    setMapLayout((prev: any) => ({
+      ...prev,
+      ...themeConfig.layout,
+      map: {
+        ...prev.map,
+        style: themeMapStyle,
+      }
+    }));
+  }, [isDark, themeMapStyle, themeConfig.layout]);
 
   // Update layout if props change
   useEffect(() => {

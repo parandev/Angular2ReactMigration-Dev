@@ -37,6 +37,8 @@ import DateRangePickerComponent from "../DateRangePicker"
 import useDocumentTitle from "../../hooks/useDocumentTitle"
 import { debounce } from 'lodash'
 import ErrorDisplay from "../ErrorDisplay"
+import { useTheme } from "../../contexts/ThemeContext"
+import { getPlotlyTheme } from "../../utils/plotlyTheme"
 
 // Available options
 const zoneGroups = ["Central Metro", "Eastern Metro", "Western Metro", "North", "Southeast", "Southwest", "Ramp Meters"]
@@ -59,6 +61,8 @@ export default function Watchdog() {
   useDocumentTitle();
   const dispatch = useAppDispatch();
   const { data, loading, error } = useSelector((state: RootState) => state.watchdog)
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
   
   const [filter, setFilter] = useState<WatchdogFilter>({
     startDate: new Date(new Date().setDate(new Date().getDate() - 7)),
@@ -100,6 +104,26 @@ export default function Watchdog() {
       renderPlot()
     }
   }, [view, data])
+
+  // Effect for handling window resize (including browser zoom)
+  useEffect(() => {
+    const handleResize = () => {
+      if (view === "plot" && plotContainerRef.current) {
+        // Use Plotly's Plots.resize to properly handle responsive resizing
+        Plotly.Plots.resize(plotContainerRef.current)
+      }
+    }
+
+    // Debounced resize handler to avoid excessive redraws
+    const debouncedResize = debounce(handleResize, 100)
+    
+    window.addEventListener('resize', debouncedResize)
+    
+    return () => {
+      window.removeEventListener('resize', debouncedResize)
+      debouncedResize.cancel()
+    }
+  }, [view])
 
   // Effect to load data when filter changes
   useEffect(() => {
@@ -166,34 +190,59 @@ export default function Watchdog() {
         "<extra></extra>",
     }
 
-    const layout = getPlotLayout(y.length)
+    const layout = getPlotLayout(y.length, isDark)
 
     Plotly.newPlot(plotContainerRef.current, [plotConfig], layout, {
       responsive: true,
+      displayModeBar: true,
+      modeBarButtonsToRemove: ['pan2d', 'lasso2d', 'select2d'],
+      displaylogo: false,
+      autosizable: true,
+      useResizeHandler: true,
     })
   }
 
-  const getPlotLayout = (yLength: number) => {
+  const getPlotLayout = (yLength: number, isDarkMode: boolean) => {
+    const themeConfig = getPlotlyTheme(isDarkMode);
     if (yLength > 0) {
       return {
-        font: {
-          size: 10,
+        ...themeConfig.layout,
+        autosize: true,
+        height: Math.max(yLength * 25 + 200, 400), // Increased spacing and minimum height
+        margin: {
+          l: 200, // Increased left margin for y-axis labels
+          r: 50,
+          t: 100,
+          b: 100,
         },
-        height: yLength * 18 + 200,
         yaxis: {
+          ...themeConfig.layout.yaxis,
           automargin: true,
-          tickmode: "auto",
+          tickmode: "linear",
           nticks: yLength,
+          tickangle: 0, // Keep labels horizontal
+          fixedrange: false, // Allow zooming/panning
         },
         xaxis: {
+          ...themeConfig.layout.xaxis,
           side: "top",
           tickformat: "%B %d",
           tickmode: "linear",
+          automargin: true,
+          fixedrange: false, // Allow zooming/panning
         },
       }
     } else {
       return {
-        height: 30,
+        ...themeConfig.layout,
+        autosize: true,
+        height: 400,
+        margin: {
+          l: 50,
+          r: 50,
+          t: 50,
+          b: 50,
+        },
         xaxis: {
           visible: false,
         },
@@ -208,6 +257,8 @@ export default function Watchdog() {
             showarrow: false,
             font: {
               size: 28,
+              family: "Arial, sans-serif",
+              color: isDarkMode ? "rgba(255,255,255,0.5)" : "rgba(0,0,0,0.5)",
             },
           },
         ],
@@ -328,7 +379,7 @@ export default function Watchdog() {
             value={filter.zoneGroup}
             onChange={(e) => handleFilterChange('zoneGroup', e.target.value)}
           >
-            {zoneGroups.map(group => (
+            {zoneGroups && zoneGroups.map(group => (
               <MenuItem key={group} value={group}>{group}</MenuItem>
             ))}
           </Select>

@@ -4,6 +4,8 @@ import { Box, Typography } from "@mui/material"
 import { PlotData, Layout } from "plotly.js"
 import AppConfig from "../utils/appConfig"
 import { Graph } from "../utils/graph"
+import { useTheme } from "../contexts/ThemeContext"
+import { mergeWithPlotlyTheme } from "../utils/plotlyTheme"
 
 interface LineGraphProps {
   data?: any[]
@@ -26,6 +28,9 @@ const LineGraph: React.FC<LineGraphProps> = ({
   isFilled = false,
   metrics
 }) => {
+  const { mode } = useTheme();
+  const isDark = mode === 'dark';
+  
   // Use graph properties if provided
   const graphLineColor = graph?.lineColor || lineColor;
   
@@ -325,7 +330,7 @@ const LineGraph: React.FC<LineGraphProps> = ({
     : ["Jul 2024", "Oct 2024", "Jan 2025", "Apr 2025"]
 
   // Layout configuration
-  const layout: Partial<Layout> = {
+  const customLayout: Partial<Layout> = {
     autosize: true,
     height: 100,
     margin: {
@@ -340,7 +345,7 @@ const LineGraph: React.FC<LineGraphProps> = ({
       zeroline: false,
       tickfont: {
         size: 10,
-        color: "#666",
+        color: isDark ? "#b3b3b3" : "#666",
       },
       tickvals: ["Jul 2024", "Oct 2024", "Jan 2025", "Apr 2025"],
       ticktext: ["Jul 2024", "Oct 2024", "Jan 2025", "Apr 2025"],
@@ -362,7 +367,7 @@ const LineGraph: React.FC<LineGraphProps> = ({
         y: values[0],
         text: formatValue(values[0]),
         showarrow: false,
-        font: { size: 10 },
+        font: { size: 10, color: isDark ? "#ffffff" : "#333333" },
         xanchor: "right",
         yanchor: "middle",
         xshift: -5, // Position before the start of the line
@@ -372,13 +377,15 @@ const LineGraph: React.FC<LineGraphProps> = ({
         y: values[values.length - 1],
         text: formatValue(values[values.length - 1]),
         showarrow: false,
-        font: { size: 10 },
+        font: { size: 10, color: isDark ? "#ffffff" : "#333333" },
         xanchor: "left",
         yanchor: "middle",
         xshift: 5, // Position after the end of the line
       },
     ],
   }
+
+  const { layout } = mergeWithPlotlyTheme(customLayout, {}, isDark);
 
   // Plot configuration
   const config = {
@@ -402,12 +409,12 @@ const LineGraph: React.FC<LineGraphProps> = ({
       }}>
         <Typography 
           variant="subtitle1" 
-          color="#000000DE" 
           sx={{ 
             mr: 0,
             mt: 3,
             width: "90px",
             flexShrink: 0,
+            color: isDark ? "#ffffff" : "#000000DE",
           }}
         >
           {title}
