@@ -1,4 +1,4 @@
-import { Routes, Route, Router } from "react-router-dom"
+import { Routes, Route } from "react-router-dom"
 import Dashboard from "../components/Dashboard"
 import Operations from "../components/Operations"
 import Maintenance from "../components/Maintenance"
@@ -9,7 +9,6 @@ import SummaryTrend from "../components/SummaryTrend"
 import SignalInfo from "../components/SignalInfo"
 import Reports from "../components/Reports"
 import Help from "../components/Help"
-import Contact from "../components/ContactForm"
 import About from "../components/About"
 import NotFound from "../components/NotFound"
 import Layout from "../components/Layout"
@@ -26,7 +25,7 @@ export default function AppRoutes() {
         <Route path="health-metrics" element={<HealthMetrics />} />
         <Route path="summary-trend" element={<SummaryTrend />} />
         <Route path="signal-info" element={<SignalInfo />} />
-        <Route path="contact" element={<Contact />} />
+        <Route path="help" element={<Help />} />
         <Route path="about" element={<About />} />
       </Route>
       <Route path="*" element={<NotFound />} />

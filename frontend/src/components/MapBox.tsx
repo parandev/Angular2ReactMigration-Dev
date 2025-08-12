@@ -75,6 +75,26 @@ export interface MapBoxProps {
 const defaultCenter = { lat: 33.789, lon: -84.388 }; // Atlanta
 const defaultZoom = 11;
 
+// Base layout configuration - stable reference
+const baseMapLayout = {
+  dragmode: "zoom" as const,
+  margin: { r: 0, t: 0, b: 0, l: 0 },
+  autosize: true,
+  xaxis: {
+    zeroline: false,
+  },
+  yaxis: {
+    zeroline: false,
+  }
+};
+
+// Helper function to safely resize Plotly charts
+const safeResizePlotly = (element: any) => {
+  if (element && window.Plotly && element.nodeType === Node.ELEMENT_NODE) {
+    window.Plotly.Plots.resize(element);
+  }
+};
+
 const MapBox: FC<MapBoxProps> = ({
   mapSettings = {
     metrics: {
@@ -116,31 +136,19 @@ const MapBox: FC<MapBoxProps> = ({
   const dispatch: AppDispatch = useDispatch();
   const signals = useSelector((state: any) => state.metrics.signals);
   const [mapData, setMapData] = useState<MapTrace[]>([]);
-  const baseLayout = {
-    dragmode: "zoom" as const,
-    margin: { r: 0, t: 0, b: 0, l: 0 },
-    autosize: true,
-    xaxis: {
-      zeroline: false,
-    },
-    yaxis: {
-      zeroline: false,
-    }
-  };
   
-  const themeConfig = mergeWithPlotlyTheme(baseLayout, {}, isDark);
-  
-  // Add map-specific properties that aren't part of standard Layout
-  const mapLayoutWithTheme = {
-    ...themeConfig.layout,
-    map: {
-      style: themeMapStyle,
-      center: center,
-      zoom: zoom
-    }
-  };
-  
-  const [mapLayout, setMapLayout] = useState<any>(mapLayoutWithTheme);
+  // Initialize map layout with theme
+  const [mapLayout, setMapLayout] = useState<any>(() => {
+    const initialThemeConfig = mergeWithPlotlyTheme(baseMapLayout, {}, isDark);
+    return {
+      ...initialThemeConfig.layout,
+      map: {
+        style: themeMapStyle,
+        center: center,
+        zoom: zoom
+      }
+    };
+  });
 
   // Separate useEffect for calculating center and zoom to avoid infinite loops
   const [autoCenter, setAutoCenter] = useState<{lat: number, lon: number} | null>(null);
@@ -155,8 +163,8 @@ const MapBox: FC<MapBoxProps> = ({
           x: 1,
           xanchor: 'right',
           y: 0.9,
-          bgcolor: 'rgba(255, 255, 255, 0.8)',
-          bordercolor: 'rgba(0, 0, 0, 0.1)',
+          bgcolor: isDark ? 'rgba(30, 30, 30, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+          bordercolor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
           borderwidth: 1
         }
       }));
@@ -207,19 +215,20 @@ const MapBox: FC<MapBoxProps> = ({
         updatemenus: undefined
       }));
     }
-  }, [showLegend, showControls, center, zoom]);
+  }, [showLegend, showControls, center, zoom, isDark]);
 
   // Update map style when theme changes
   useEffect(() => {
+    const currentThemeConfig = mergeWithPlotlyTheme(baseMapLayout, {}, isDark);
     setMapLayout((prev: any) => ({
       ...prev,
-      ...themeConfig.layout,
+      ...currentThemeConfig.layout,
       map: {
         ...prev.map,
         style: themeMapStyle,
       }
     }));
-  }, [isDark, themeMapStyle, themeConfig.layout]);
+  }, [isDark, themeMapStyle]);
 
   // Update layout if props change
   useEffect(() => {
@@ -227,12 +236,12 @@ const MapBox: FC<MapBoxProps> = ({
       ...prevLayout,
       map: {
         ...prevLayout.map,
-        style: mapStyle,
+        style: themeMapStyle,
         center: center,
         zoom: zoom
       },
     }));
-  }, [center, zoom, mapStyle]);
+  }, [center, zoom, themeMapStyle]);
 
   // Fetch signals data if needed
   useEffect(() => {
@@ -436,9 +445,7 @@ const MapBox: FC<MapBoxProps> = ({
     const resizeObserver = new ResizeObserver(() => {
       // Debounce the resize to avoid too many calls
       setTimeout(() => {
-        if (plotRef.current && window.Plotly) {
-          window.Plotly.Plots.resize(plotRef.current);
-        }
+        safeResizePlotly(plotRef.current);
       }, 100);
     });
 
@@ -452,9 +459,7 @@ const MapBox: FC<MapBoxProps> = ({
   // Force resize when layout changes (sidebar expand/collapse)
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (plotRef.current && window.Plotly) {
-        window.Plotly.Plots.resize(plotRef.current);
-      }
+      safeResizePlotly(plotRef.current);
     }, 350); // Wait for transition to complete
 
     return () => clearTimeout(timer);
@@ -463,12 +468,10 @@ const MapBox: FC<MapBoxProps> = ({
   // Listen for window resize events (triggered by sidebar changes)
   useEffect(() => {
     const handleResize = () => {
-      if (plotRef.current && window.Plotly) {
-        // Small delay to ensure DOM has updated
-        setTimeout(() => {
-          window.Plotly.Plots.resize(plotRef.current);
-        }, 50);
-      }
+      // Small delay to ensure DOM has updated
+      setTimeout(() => {
+        safeResizePlotly(plotRef.current);
+      }, 50);
     };
 
     window.addEventListener('resize', handleResize);
@@ -588,18 +591,14 @@ const MapBox: FC<MapBoxProps> = ({
               ...mapOptions
             }}
             useResizeHandler={true}
-            onInitialized={(figure, graphDiv) => {
+            onInitialized={(_figure, graphDiv) => {
               // Store reference to the graph div for resize operations
               plotRef.current = graphDiv;
-              if (graphDiv && window.Plotly) {
-                window.Plotly.Plots.resize(graphDiv);
-              }
+              safeResizePlotly(graphDiv);
             }}
-            onUpdate={(figure, graphDiv) => {
+            onUpdate={(_figure, graphDiv) => {
               // Force resize when component updates
-              if (graphDiv && window.Plotly) {
-                window.Plotly.Plots.resize(graphDiv);
-              }
+              safeResizePlotly(graphDiv);
             }}
           />
           {(!mapData || mapData.length === 0 || (mapData[0]?.lat?.length === 0) || (mapData[0]?.lat?.[0] === defaultCenter.lat && mapData[0]?.lon?.[0] === defaultCenter.lon)) && (
@@ -609,7 +608,7 @@ const MapBox: FC<MapBoxProps> = ({
                 top: '50%', 
                 left: '50%', 
                 transform: 'translate(-50%, -50%)', 
-                backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+                backgroundColor: isDark ? 'rgba(30, 30, 30, 0.8)' : 'rgba(255, 255, 255, 0.8)', 
                 p: 2, 
                 borderRadius: 1,
                 textAlign: 'center'
@@ -629,7 +628,7 @@ const MapBox: FC<MapBoxProps> = ({
                 p: 1,
                 zIndex: 1000,
                 width: 150,
-                bgcolor: 'rgba(255, 255, 255, 0.9)',
+                bgcolor: isDark ? 'rgba(30, 30, 30, 0.9)' : 'rgba(255, 255, 255, 0.9)',
               }}
             >
               {renderLegend()}

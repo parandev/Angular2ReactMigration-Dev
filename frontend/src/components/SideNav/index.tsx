@@ -17,6 +17,7 @@ import BuildIcon from "@mui/icons-material/Build"
 import AssessmentIcon from "@mui/icons-material/Assessment"
 import TrendingUpIcon from "@mui/icons-material/TrendingUp"
 import InfoIcon from "@mui/icons-material/Info"
+import HelpIcon from "@mui/icons-material/Help"
 import AlarmIcon from '@mui/icons-material/Alarm';
 import ToysIcon from '@mui/icons-material/Toys';
 import SettingsInputAntennaIcon from "@mui/icons-material/SettingsInputAntenna"
@@ -58,7 +59,7 @@ export default function SideNav({ open = true, expanded = true, width, onMouseEn
     { text: "Summary Trend", icon: <TrendingUpIcon />, path: "/summary-trend" },
     { text: "Signal Info", icon: <SettingsInputAntennaIcon />, path: "/signal-info" },
     { text: "Reports", icon: <AssessmentIcon />, path: "/reports" },
-    //{ text: "Help", icon: <HelpIcon />, path: "/help" },
+    { text: "Help", icon: <HelpIcon />, path: "/help" },
     { text: "About", icon: <InfoIcon />, path: "/about" },
   ]
 
