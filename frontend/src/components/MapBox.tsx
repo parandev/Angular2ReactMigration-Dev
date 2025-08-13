@@ -75,8 +75,8 @@ export interface MapBoxProps {
 const defaultCenter = { lat: 33.789, lon: -84.388 }; // Atlanta
 const defaultZoom = 11;
 
-// Base layout configuration - stable reference
-const baseMapLayout = {
+// Default layout properties for consistent width handling
+const defaultLayoutProps = {
   dragmode: "zoom" as const,
   margin: { r: 0, t: 0, b: 0, l: 0 },
   autosize: true,
@@ -137,11 +137,32 @@ const MapBox: FC<MapBoxProps> = ({
   const signals = useSelector((state: any) => state.metrics.signals);
   const [mapData, setMapData] = useState<MapTrace[]>([]);
   
-  // Initialize map layout with theme
+  // Initialize map layout with theme - using same structure as old version
   const [mapLayout, setMapLayout] = useState<any>(() => {
-    const initialThemeConfig = mergeWithPlotlyTheme(baseMapLayout, {}, isDark);
+    const initialThemeConfig = mergeWithPlotlyTheme({}, {}, isDark);
     return {
-      ...initialThemeConfig.layout,
+      // Apply theme-specific properties
+      plot_bgcolor: initialThemeConfig.layout.plot_bgcolor,
+      paper_bgcolor: initialThemeConfig.layout.paper_bgcolor,
+      font: initialThemeConfig.layout.font,
+      colorway: initialThemeConfig.layout.colorway,
+      legend: initialThemeConfig.layout.legend,
+      hoverlabel: initialThemeConfig.layout.hoverlabel,
+      // Apply critical layout properties for width handling
+      dragmode: defaultLayoutProps.dragmode,
+      margin: defaultLayoutProps.margin,
+      autosize: defaultLayoutProps.autosize,
+      // Handle axis properties with theme colors but preserve structure
+      xaxis: {
+        ...defaultLayoutProps.xaxis,
+        ...initialThemeConfig.layout.xaxis,
+        zeroline: false,
+      },
+      yaxis: {
+        ...defaultLayoutProps.yaxis,
+        ...initialThemeConfig.layout.yaxis,
+        zeroline: false,
+      },
       map: {
         style: themeMapStyle,
         center: center,
@@ -219,10 +240,34 @@ const MapBox: FC<MapBoxProps> = ({
 
   // Update map style when theme changes
   useEffect(() => {
-    const currentThemeConfig = mergeWithPlotlyTheme(baseMapLayout, {}, isDark);
+    const currentThemeConfig = mergeWithPlotlyTheme({}, {}, isDark);
     setMapLayout((prev: any) => ({
       ...prev,
-      ...currentThemeConfig.layout,
+      // Apply only theme-specific properties, not layout structure
+      plot_bgcolor: currentThemeConfig.layout.plot_bgcolor,
+      paper_bgcolor: currentThemeConfig.layout.paper_bgcolor,
+      font: currentThemeConfig.layout.font,
+      colorway: currentThemeConfig.layout.colorway,
+      legend: {
+        ...prev.legend,
+        ...currentThemeConfig.layout.legend,
+      },
+      hoverlabel: currentThemeConfig.layout.hoverlabel,
+      // Ensure critical layout properties are preserved (excluding xaxis/yaxis to avoid conflicts)
+      dragmode: defaultLayoutProps.dragmode,
+      margin: defaultLayoutProps.margin,
+      autosize: defaultLayoutProps.autosize,
+      // Handle axis properties separately to apply theme colors while preserving structure
+      xaxis: {
+        ...defaultLayoutProps.xaxis,
+        ...currentThemeConfig.layout.xaxis,
+        zeroline: false, // Preserve original
+      },
+      yaxis: {
+        ...defaultLayoutProps.yaxis,
+        ...currentThemeConfig.layout.yaxis,
+        zeroline: false, // Preserve original
+      },
       map: {
         ...prev.map,
         style: themeMapStyle,
@@ -240,6 +285,10 @@ const MapBox: FC<MapBoxProps> = ({
         center: center,
         zoom: zoom
       },
+      // Ensure critical properties are maintained
+      dragmode: defaultLayoutProps.dragmode,
+      margin: defaultLayoutProps.margin,
+      autosize: defaultLayoutProps.autosize,
     }));
   }, [center, zoom, themeMapStyle]);
 
@@ -434,6 +483,10 @@ const MapBox: FC<MapBoxProps> = ({
           center: newCenter,
           zoom: newZoom
         },
+        // Ensure critical properties are maintained
+        dragmode: defaultLayoutProps.dragmode,
+        margin: defaultLayoutProps.margin,
+        autosize: defaultLayoutProps.autosize,
       };
     });
   }, [autoCenter, autoZoom, center, zoom, mapStyle]);
