@@ -8,7 +8,6 @@ import HealthMetrics from "../components/HealthMetrics"
 import SummaryTrend from "../components/SummaryTrend"
 import SignalInfo from "../components/SignalInfo"
 import Reports from "../components/Reports"
-import Help from "../components/Help"
 import About from "../components/About"
 import NotFound from "../components/NotFound"
 import Layout from "../components/Layout"
@@ -25,7 +24,6 @@ export default function AppRoutes() {
         <Route path="health-metrics" element={<HealthMetrics />} />
         <Route path="summary-trend" element={<SummaryTrend />} />
         <Route path="signal-info" element={<SignalInfo />} />
-        <Route path="help" element={<Help />} />
         <Route path="about" element={<About />} />
       </Route>
       <Route path="*" element={<NotFound />} />

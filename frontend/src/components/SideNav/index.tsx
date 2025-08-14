@@ -59,7 +59,6 @@ export default function SideNav({ open = true, expanded = true, width, onMouseEn
     { text: "Summary Trend", icon: <TrendingUpIcon />, path: "/summary-trend" },
     { text: "Signal Info", icon: <SettingsInputAntennaIcon />, path: "/signal-info" },
     { text: "Reports", icon: <AssessmentIcon />, path: "/reports" },
-    { text: "Help", icon: <HelpIcon />, path: "/help" },
     { text: "About", icon: <InfoIcon />, path: "/about" },
   ]
 
