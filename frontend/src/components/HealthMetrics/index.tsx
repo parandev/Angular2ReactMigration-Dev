@@ -709,7 +709,7 @@ const MetricsTable = ({ type }: MetricsTableProps) => {
         setPage(0); // Reset to first page when filtering
     };
 
-    const handleChangePage = (event: unknown, newPage: number) => {
+    const handleChangePage = (_event: unknown, newPage: number) => {
         setPage(newPage);
     };
 
@@ -860,30 +860,18 @@ const MetricsTable = ({ type }: MetricsTableProps) => {
     );
 };
 
-interface TimeSeriesTrace {
-    x: string[];
-    y: number[];
-    type: string;
-    mode: string;
-    name: string;
-    line: { width: number; color: string };
-    marker: { color: string };
-    hovertemplate: string;
-    text: string[];
-    visible: boolean | string;
+interface LocationMetric {
+    location: string;
+    value: number;
 }
 
-interface LocationBarData {
-    x: number[];
-    y: string[];
-    type: string;
-    orientation: string;
-    marker: {
-        color: string[];
-        opacity: number[];
-    };
-    hovertemplate: string;
+interface TimeSeriesData {
+    date: string;
+    value: number;
+    location: string;
 }
+
+
 
 interface TrendGraphsProps {
     type: 'maintenance' | 'operation' | 'safety';
@@ -892,16 +880,10 @@ interface TrendGraphsProps {
 const TrendGraphs: React.FC<TrendGraphsProps> = ({ type }) => {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesTrace[]>([]);
-    const [locationBarData, setLocationBarData] = useState<LocationBarData>({
-        x: [],
-        y: [],
-        type: 'bar',
-        orientation: 'h',
-        marker: { color: [], opacity: [] },
-        hovertemplate: ''
-    });
+    const [timeSeriesData, setTimeSeriesData] = useState<TimeSeriesData[]>([]);
+    const [locationMetrics, setLocationMetrics] = useState<LocationMetric[]>([]);
     const [hoveredLocation, setHoveredLocation] = useState<string | null>(null);
+    const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
     const [rawData, setRawData] = useState<MetricData[]>([]);
     const [averageData, setAverageData] = useState<{label: string; avg: number}[]>([]);
 
@@ -925,32 +907,9 @@ const TrendGraphs: React.FC<TrendGraphsProps> = ({ type }) => {
         classification: "",
     }), []);
 
-    // Plotly's default color palette for consistent colors
-    const getLocationColor = useCallback((index: number) => {
-        const colors = [
-            '#1f77b4', // blue
-            '#ff7f0e', // orange
-            '#2ca02c', // green
-            '#d62728', // red
-            '#9467bd', // purple
-            '#8c564b', // brown
-            '#e377c2', // pink
-            '#7f7f7f', // gray
-            '#bcbd22', // yellow-green
-            '#17becf'  // cyan
-        ];
-        return colors[index % colors.length];
-    }, []);
 
-    // Create a mapping of locations to colors for time series (consistent across time)
-    const getLocationColors = useCallback(() => {
-        const uniqueLocations = Array.from(new Set([
-            ...rawData.map(item => item.corridor || item.zoneGroup || 'Unknown'),
-            ...averageData.map(item => item.label || 'Unknown')
-        ])).sort(); // Sort alphabetically to ensure consistent ordering for time series
-        
-        return Object.fromEntries(uniqueLocations.map((location, index) => [location, getLocationColor(index)]));
-    }, [rawData, averageData, getLocationColor]);
+
+
 
     // Get measure code based on type
     const getMeasure = useCallback(() => {
@@ -1044,17 +1003,16 @@ const TrendGraphs: React.FC<TrendGraphsProps> = ({ type }) => {
     useEffect(() => {
         if (!rawData.length && !averageData.length) return;
 
-        // Process location bar data first to determine sorted order
-        let sortedData: Array<{location: string, average: number, label: string}> = [];
+        // Process location metrics to match Operations format
+        let processedLocationMetrics: LocationMetric[] = [];
         
         if (averageData.length) {
-            sortedData = [...averageData]
+            processedLocationMetrics = [...averageData]
                 .map(item => ({
                     location: item.label || 'Unknown',
-                    average: item.avg || 0,
-                    label: item.label
+                    value: item.avg || 0
                 }))
-                .sort((a, b) => a.average - b.average);
+                .sort((a, b) => a.value - b.value);
         } else {
             // Fallback to using rawData
             const aggregatedData: Record<string, { sum: number, count: number }> = {};
@@ -1074,143 +1032,137 @@ const TrendGraphs: React.FC<TrendGraphsProps> = ({ type }) => {
                 aggregatedData[location].count += 1;
             });
             
-            sortedData = Object.entries(aggregatedData)
+            processedLocationMetrics = Object.entries(aggregatedData)
                 .map(([location, { sum, count }]) => ({
                     location,
-                    average: count > 0 ? sum / count : 0,
-                    label: location
+                    value: count > 0 ? sum / count : 0
                 }))
-                .sort((a, b) => a.average - b.average);
+                .sort((a, b) => a.value - b.value);
         }
-
-        // Create color mapping based on sorted order (by value) to avoid consecutive same colors
-        const sortedLocationColors: Record<string, string> = {};
-        sortedData.forEach((item, index) => {
-            sortedLocationColors[item.location] = getLocationColor(index);
-        });
-
-        // Get all unique locations from both data sources for time series
-        const allUniqueLocations = Array.from(new Set([
-            ...rawData.map(item => item.corridor || item.zoneGroup || 'Unknown'),
-            ...averageData.map(item => item.label || 'Unknown')
-        ]));
-
-        // Create comprehensive color mapping: prioritize sorted colors, fill gaps for time series locations
-        const locationColors: Record<string, string> = { ...sortedLocationColors };
-        let nextColorIndex = sortedData.length; // Start after the sorted data colors
         
-        allUniqueLocations.forEach(location => {
-            if (!locationColors[location]) {
-                locationColors[location] = getLocationColor(nextColorIndex);
-                nextColorIndex++;
-            }
-        });
+        setLocationMetrics(processedLocationMetrics);
 
-        // Create location bar data with colors based on sorted position
-        const processedLocationBarData = {
-            x: sortedData.map(item => item.average),
-            y: sortedData.map(item => item.location),
-            type: 'bar' as const,
-            orientation: 'h' as const,
-            marker: {
-                color: sortedData.map(item => sortedLocationColors[item.location]),
-                opacity: sortedData.map(item => 
-                    hoveredLocation ? (item.location === hoveredLocation ? 1 : 0.5) : 1
-                )
-            },
-            hovertemplate: '<b>%{y}</b><br>Value: %{x:.1%}<extra></extra>',
-        };
 
-        setLocationBarData(processedLocationBarData);
 
-        // Process time series data
-        const groupedData: Record<string, {
-            monthYear: string;
-            date: Date;
-            values: number[];
-            count: number;
-        }[]> = {};
+        // Process time series data to match Operations format
+        const processedTimeSeriesData: TimeSeriesData[] = [];
         
         rawData.forEach(item => {
             const dateStr = item.month || item.timestamp;
             if (!dateStr) return;
             
             const date = new Date(dateStr);
-            const monthYear = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
+            const formattedDate = `${date.toLocaleString('default', { month: 'short' })} ${date.getFullYear()}`;
             
-            const group = item.zoneGroup || item.corridor || 'Unknown';
-            
-            if (!groupedData[group]) {
-                groupedData[group] = [];
-            }
-            
-            const existingEntry = groupedData[group].find(entry => entry.monthYear === monthYear);
+            const location = item.zoneGroup || item.corridor || 'Unknown';
             
             const metricValue = typeof item['percent Health'] === 'string' 
                 ? parseFloat(item['percent Health']) 
                 : (item['percent Health'] || item.value || 0);
             
-            if (existingEntry) {
-                existingEntry.values.push(metricValue);
-                existingEntry.count += 1;
-            } else {
-                groupedData[group].push({
-                    monthYear,
-                    date,
-                    values: [metricValue],
-                    count: 1
-                });
-            }
-        });
-
-        // Convert to time series format
-        const processedTimeSeriesData = Object.entries(groupedData).map(([group, points]) => {
-            points.sort((a, b) => a.date.getTime() - b.date.getTime());
-            
-            return {
-                x: points.map(p => p.monthYear),
-                y: points.map(p => {
-                    const sum = p.values.reduce((acc: number, val: number) => acc + val, 0);
-                    return p.count > 0 ? sum / p.count : 0;
-                }),
-                type: 'scatter',
-                mode: 'lines+markers',
-                name: group,
-                line: { 
-                    width: 2,
-                    color: locationColors[group]
-                },
-                marker: {
-                    color: locationColors[group]
-                },
-                hovertemplate: '<b>%{text}</b><br>Date: %{x}<br>Value: %{y:.1%}<extra></extra>',
-                text: Array(points.length).fill(group),
-                visible: true, // Always show all traces
-            };
+            processedTimeSeriesData.push({
+                date: formattedDate,
+                value: metricValue,
+                location: location
+            });
         });
 
         setTimeSeriesData(processedTimeSeriesData);
-    }, [rawData, averageData, getLocationColors]);
+    }, [rawData, averageData]);
+    
+    // Memoize colors based on sorted order to prevent consecutive same colors
+    const locationColors = useMemo(() => {
+        const colors = [
+            '#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd',
+            '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf'
+        ];
+        const getLocationColor = (index: number) => colors[index % colors.length];
+        
+        if (!locationMetrics.length) {
+            return {};
+        }
+        
+        // Create color mapping based on sorted order (by value) to avoid consecutive same colors
+        const sortedLocationColors: Record<string, string> = {};
+        locationMetrics.forEach((item, index) => {
+            sortedLocationColors[item.location] = getLocationColor(index);
+        });
+
+        // Get all unique locations from both data sources for time series
+        const allUniqueLocations = Array.from(new Set([
+            ...locationMetrics.map(item => item.location),
+            ...timeSeriesData.map(item => item.location)
+        ]));
+
+        // Create comprehensive color mapping: prioritize sorted colors, fill gaps for time series locations
+        const comprehensiveLocationColors: Record<string, string> = { ...sortedLocationColors };
+        let nextColorIndex = locationMetrics.length; // Start after the sorted data colors
+        
+        allUniqueLocations.forEach(location => {
+            if (!comprehensiveLocationColors[location]) {
+                comprehensiveLocationColors[location] = getLocationColor(nextColorIndex);
+                nextColorIndex++;
+            }
+        });
+        
+        return comprehensiveLocationColors;
+    }, [locationMetrics, timeSeriesData]);
+    
+    // Memoize location bar chart data
+    const locationBarData = useMemo(() => ({
+        y: locationMetrics.map((item) => item.location),
+        x: locationMetrics.map((item) => item.value),
+        type: "bar",
+        orientation: "h",
+        marker: {
+            color: locationMetrics.map(item => locationColors[item.location]),
+            opacity: locationMetrics.map(item => 
+                selectedLocation ? (item.location === selectedLocation ? 1 : 0.5) : 1
+            )
+        },
+        hovertemplate: '<b>%{y}</b><br>Value: %{x:.1%}<extra></extra>',
+    }), [locationMetrics, locationColors, selectedLocation]);
+    
+    // Memoize time series chart data
+    const timeSeriesChartData = useMemo(() => {
+        // Group by location
+        const locationGroups: { [key: string]: { x: string[]; y: number[] } } = {}
+        
+        timeSeriesData.forEach((item) => {
+            // Always process all data - don't filter by selectedLocation
+            if (!locationGroups[item.location]) {
+                locationGroups[item.location] = { x: [], y: [] }
+            }
+            locationGroups[item.location].x.push(item.date)
+            locationGroups[item.location].y.push(item.value)
+        })
+
+        // Convert to Plotly format
+        return Object.keys(locationGroups).map((location) => ({
+            x: locationGroups[location].x,
+            y: locationGroups[location].y,
+            type: "scatter",
+            mode: "lines",
+            name: location,
+            line: { 
+                width: 2,
+                color: locationColors[location]
+            },
+            hovertemplate: '<b>%{text}</b><br>Date: %{x}<br>Value: %{y:.1%}<extra></extra>',
+            text: Array(locationGroups[location].x.length).fill(location),
+        }))
+    }, [timeSeriesData, locationColors]); // Removed selectedLocation dependency
 
     // Handle bar hover in location chart
     const handleLocationHover = (location: string | null) => {
-        console.log('handleLocationHover', location);
         setHoveredLocation(location);
     };
     
-    // Helper function for time series chart data - no longer filtering
-    const timeSeriesChartData = () => {
-        if (!timeSeriesData.length) {
-            return [{
-                x: [],
-                y: [],
-                type: 'scatter',
-                mode: 'lines+markers'
-            }];
-        }
-        
-        return timeSeriesData; // Return all data without filtering
+    // Handle bar click in location chart
+    const handleLocationClick = (location: string | null) => {
+        setSelectedLocation(location);
     };
+
 
     if (error) {
         return (
@@ -1247,7 +1199,9 @@ const TrendGraphs: React.FC<TrendGraphsProps> = ({ type }) => {
                                 data={locationBarData}
                                 selectedMetric="healthMetrics"
                                 onLocationHover={handleLocationHover}
-                                height={Math.max(500, (locationBarData.y?.length || 0) * 25)}
+                                onLocationClick={handleLocationClick}
+                                selectedLocation={selectedLocation}
+                                height={500}
                             />
                         </Box>
                     </Grid>
@@ -1255,10 +1209,11 @@ const TrendGraphs: React.FC<TrendGraphsProps> = ({ type }) => {
                     {/* Time Series Chart */}
                     <Grid size={{xs: 12, md: 8}}>
                         <TimeSeriesChart 
-                            data={timeSeriesChartData()}
+                            data={timeSeriesChartData}
                             selectedMetric="healthMetrics"
                             height={500}
                             hoveredLocation={hoveredLocation}
+                            selectedLocation={selectedLocation}
                         />
                     </Grid>
                 </Grid>
@@ -1284,7 +1239,7 @@ const HealthMetrics = () => {
         tab: tabLabels[tabValue]
     });
 
-    const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
         setTabValue(newValue);
     };
 

@@ -105,6 +105,13 @@ export default function Watchdog() {
     }
   }, [view, data])
 
+  // Effect for re-rendering the plot when theme changes
+  useEffect(() => {
+    if (view === "plot" && data && data.length > 0 && plotContainerRef.current) {
+      renderPlot()
+    }
+  }, [isDark])
+
   // Effect for handling window resize (including browser zoom)
   useEffect(() => {
     const handleResize = () => {
@@ -114,13 +121,27 @@ export default function Watchdog() {
       }
     }
 
+    // Enhanced resize handler with immediate and debounced calls
+    const immediateResize = () => {
+      if (view === "plot" && plotContainerRef.current) {
+        Plotly.Plots.resize(plotContainerRef.current)
+      }
+    }
+
     // Debounced resize handler to avoid excessive redraws
     const debouncedResize = debounce(handleResize, 100)
     
-    window.addEventListener('resize', debouncedResize)
+    // Handle multiple resize events for better responsiveness
+    window.addEventListener('resize', immediateResize) // Immediate resize for quick response
+    window.addEventListener('resize', debouncedResize) // Debounced for performance
+    
+    // Also listen for zoom events specifically
+    window.addEventListener('wheel', debouncedResize, { passive: true })
     
     return () => {
+      window.removeEventListener('resize', immediateResize)
       window.removeEventListener('resize', debouncedResize)
+      window.removeEventListener('wheel', debouncedResize)
       debouncedResize.cancel()
     }
   }, [view])
@@ -199,6 +220,7 @@ export default function Watchdog() {
       displaylogo: false,
       autosizable: true,
       useResizeHandler: true,
+      doubleClick: 'reset+autosize', // Reset and autosize on double click
     })
   }
 
@@ -214,6 +236,7 @@ export default function Watchdog() {
           r: 50,
           t: 100,
           b: 100,
+          autoexpand: true, // Allow margins to expand automatically
         },
         yaxis: {
           ...themeConfig.layout.yaxis,
@@ -222,6 +245,8 @@ export default function Watchdog() {
           nticks: yLength,
           tickangle: 0, // Keep labels horizontal
           fixedrange: false, // Allow zooming/panning
+          scaleratio: 1, // Maintain aspect ratio
+          scaleanchor: "x", // Scale with x-axis for consistency
         },
         xaxis: {
           ...themeConfig.layout.xaxis,
@@ -230,7 +255,12 @@ export default function Watchdog() {
           tickmode: "linear",
           automargin: true,
           fixedrange: false, // Allow zooming/panning
+          constrain: "domain", // Keep within plot area
         },
+        // Enhanced responsive configuration
+        responsive: true,
+        useResizeHandler: true,
+        autoexpand: true,
       }
     } else {
       return {
@@ -242,6 +272,7 @@ export default function Watchdog() {
           r: 50,
           t: 50,
           b: 50,
+          autoexpand: true,
         },
         xaxis: {
           visible: false,
@@ -262,6 +293,8 @@ export default function Watchdog() {
             },
           },
         ],
+        responsive: true,
+        useResizeHandler: true,
       }
     }
   }
@@ -290,7 +323,7 @@ export default function Watchdog() {
     }))
   }
 
-  const handleViewChange = (event: React.SyntheticEvent, newValue: string) => {
+  const handleViewChange = (_event: React.SyntheticEvent, newValue: string) => {
     setView(newValue)
   }
 
@@ -369,7 +402,14 @@ export default function Watchdog() {
   return (
     <Box sx={{ height: "100%", display: "flex", flexDirection: "column", overflow: "auto" }}>
       {/* Filter Controls */}
-      <Box sx={{ p: 1, display: "flex", flexWrap: "wrap", gap: 1, bgcolor: "#f5f5f5" }}>
+      <Box sx={{ 
+        p: 1, 
+        display: "flex", 
+        flexWrap: "wrap", 
+        gap: 1, 
+        bgcolor: isDark ? 'rgba(255, 255, 255, 0.05)' : '#f5f5f5',
+        borderBottom: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)'}` 
+      }}>
         {/* Region */}
         <FormControl size="small" sx={{ minWidth: 150 }}>
           <InputLabel id="region-label">Region</InputLabel>
@@ -469,92 +509,168 @@ export default function Watchdog() {
             <TableHead>
               <TableRow>
                 <TableCell 
-                  sx={{ backgroundColor: "#2196f3", color: "white", fontWeight: "normal", padding: "12px 16px", borderRight: "1px solid rgba(255, 255, 255, 0.2)", textAlign: "center" }}
+                  sx={{ 
+                    backgroundColor: isDark ? "rgba(144, 202, 249, 0.16)" : "#2196f3", 
+                    color: isDark ? "#90caf9" : "white", 
+                    fontWeight: "normal", 
+                    padding: "12px 16px", 
+                    borderRight: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.2)'}`, 
+                    textAlign: "center" 
+                  }}
                   sortDirection={orderBy === "zone" ? order : false}
                 >
                   <TableSortLabel
                     active={orderBy === "zone"}
                     direction={orderBy === "zone" ? order : "asc"}
                     onClick={() => handleRequestSort("zone")}
-                    sx={{ color: "white", "&.MuiTableSortLabel-active": { color: "white" }, "& .MuiTableSortLabel-icon": { color: "white !important" } }}
+                    sx={{ 
+                      color: isDark ? "#90caf9" : "white", 
+                      "&.MuiTableSortLabel-active": { color: isDark ? "#90caf9" : "white" }, 
+                      "& .MuiTableSortLabel-icon": { color: `${isDark ? "#90caf9" : "white"} !important` } 
+                    }}
                   >
                     Zone
                   </TableSortLabel>
                 </TableCell>
                 <TableCell 
-                  sx={{ backgroundColor: "#2196f3", color: "white", fontWeight: "normal", padding: "12px 16px", borderRight: "1px solid rgba(255, 255, 255, 0.2)", textAlign: "center" }}
+                  sx={{ 
+                    backgroundColor: isDark ? "rgba(144, 202, 249, 0.16)" : "#2196f3", 
+                    color: isDark ? "#90caf9" : "white", 
+                    fontWeight: "normal", 
+                    padding: "12px 16px", 
+                    borderRight: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.2)'}`, 
+                    textAlign: "center" 
+                  }}
                   sortDirection={orderBy === "corridor" ? order : false}
                 >
                   <TableSortLabel
                     active={orderBy === "corridor"}
                     direction={orderBy === "corridor" ? order : "asc"}
                     onClick={() => handleRequestSort("corridor")}
-                    sx={{ color: "white", "&.MuiTableSortLabel-active": { color: "white" }, "& .MuiTableSortLabel-icon": { color: "white !important" } }}
+                    sx={{ 
+                      color: isDark ? "#90caf9" : "white", 
+                      "&.MuiTableSortLabel-active": { color: isDark ? "#90caf9" : "white" }, 
+                      "& .MuiTableSortLabel-icon": { color: `${isDark ? "#90caf9" : "white"} !important` } 
+                    }}
                   >
                     Corridor
                   </TableSortLabel>
                 </TableCell>
                 <TableCell 
-                  sx={{ backgroundColor: "#2196f3", color: "white", fontWeight: "normal", padding: "12px 16px", borderRight: "1px solid rgba(255, 255, 255, 0.2)", textAlign: "center" }}
+                  sx={{ 
+                    backgroundColor: isDark ? "rgba(144, 202, 249, 0.16)" : "#2196f3", 
+                    color: isDark ? "#90caf9" : "white", 
+                    fontWeight: "normal", 
+                    padding: "12px 16px", 
+                    borderRight: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.2)'}`, 
+                    textAlign: "center" 
+                  }}
                   sortDirection={orderBy === "signalID" ? order : false}
                 >
                   <TableSortLabel
                     active={orderBy === "signalID"}
                     direction={orderBy === "signalID" ? order : "asc"}
                     onClick={() => handleRequestSort("signalID")}
-                    sx={{ color: "white", "&.MuiTableSortLabel-active": { color: "white" }, "& .MuiTableSortLabel-icon": { color: "white !important" } }}
+                    sx={{ 
+                      color: isDark ? "#90caf9" : "white", 
+                      "&.MuiTableSortLabel-active": { color: isDark ? "#90caf9" : "white" }, 
+                      "& .MuiTableSortLabel-icon": { color: `${isDark ? "#90caf9" : "white"} !important` } 
+                    }}
                   >
                     SignalID
                   </TableSortLabel>
                 </TableCell>
                 <TableCell 
-                  sx={{ backgroundColor: "#2196f3", color: "white", fontWeight: "normal", padding: "12px 16px", borderRight: "1px solid rgba(255, 255, 255, 0.2)", textAlign: "center" }}
+                  sx={{ 
+                    backgroundColor: isDark ? "rgba(144, 202, 249, 0.16)" : "#2196f3", 
+                    color: isDark ? "#90caf9" : "white", 
+                    fontWeight: "normal", 
+                    padding: "12px 16px", 
+                    borderRight: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.2)'}`, 
+                    textAlign: "center" 
+                  }}
                   sortDirection={orderBy === "name" ? order : false}
                 >
                   <TableSortLabel
                     active={orderBy === "name"}
                     direction={orderBy === "name" ? order : "asc"}
                     onClick={() => handleRequestSort("name")}
-                    sx={{ color: "white", "&.MuiTableSortLabel-active": { color: "white" }, "& .MuiTableSortLabel-icon": { color: "white !important" } }}
+                    sx={{ 
+                      color: isDark ? "#90caf9" : "white", 
+                      "&.MuiTableSortLabel-active": { color: isDark ? "#90caf9" : "white" }, 
+                      "& .MuiTableSortLabel-icon": { color: `${isDark ? "#90caf9" : "white"} !important` } 
+                    }}
                   >
                     Name
                   </TableSortLabel>
                 </TableCell>
                 <TableCell 
-                  sx={{ backgroundColor: "#2196f3", color: "white", fontWeight: "normal", padding: "12px 16px", borderRight: "1px solid rgba(255, 255, 255, 0.2)", textAlign: "center" }}
+                  sx={{ 
+                    backgroundColor: isDark ? "rgba(144, 202, 249, 0.16)" : "#2196f3", 
+                    color: isDark ? "#90caf9" : "white", 
+                    fontWeight: "normal", 
+                    padding: "12px 16px", 
+                    borderRight: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.2)'}`, 
+                    textAlign: "center" 
+                  }}
                   sortDirection={orderBy === "alert" ? order : false}
                 >
                   <TableSortLabel
                     active={orderBy === "alert"}
                     direction={orderBy === "alert" ? order : "asc"}
                     onClick={() => handleRequestSort("alert")}
-                    sx={{ color: "white", "&.MuiTableSortLabel-active": { color: "white" }, "& .MuiTableSortLabel-icon": { color: "white !important" } }}
+                    sx={{ 
+                      color: isDark ? "#90caf9" : "white", 
+                      "&.MuiTableSortLabel-active": { color: isDark ? "#90caf9" : "white" }, 
+                      "& .MuiTableSortLabel-icon": { color: `${isDark ? "#90caf9" : "white"} !important` } 
+                    }}
                   >
                     Alert
                   </TableSortLabel>
                 </TableCell>
                 <TableCell 
-                  sx={{ backgroundColor: "#2196f3", color: "white", fontWeight: "normal", padding: "12px 16px", borderRight: "1px solid rgba(255, 255, 255, 0.2)", textAlign: "center" }}
+                  sx={{ 
+                    backgroundColor: isDark ? "rgba(144, 202, 249, 0.16)" : "#2196f3", 
+                    color: isDark ? "#90caf9" : "white", 
+                    fontWeight: "normal", 
+                    padding: "12px 16px", 
+                    borderRight: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(255, 255, 255, 0.2)'}`, 
+                    textAlign: "center" 
+                  }}
                   sortDirection={orderBy === "occurrences" ? order : false}
                 >
                   <TableSortLabel
                     active={orderBy === "occurrences"}
                     direction={orderBy === "occurrences" ? order : "asc"}
                     onClick={() => handleRequestSort("occurrences")}
-                    sx={{ color: "white", "&.MuiTableSortLabel-active": { color: "white" }, "& .MuiTableSortLabel-icon": { color: "white !important" } }}
+                    sx={{ 
+                      color: isDark ? "#90caf9" : "white", 
+                      "&.MuiTableSortLabel-active": { color: isDark ? "#90caf9" : "white" }, 
+                      "& .MuiTableSortLabel-icon": { color: `${isDark ? "#90caf9" : "white"} !important` } 
+                    }}
                   >
                     Occurrences
                   </TableSortLabel>
                 </TableCell>
                 <TableCell 
-                  sx={{ backgroundColor: "#2196f3", color: "white", fontWeight: "normal", padding: "12px 16px", textAlign: "center" }}
+                  sx={{ 
+                    backgroundColor: isDark ? "rgba(144, 202, 249, 0.16)" : "#2196f3", 
+                    color: isDark ? "#90caf9" : "white", 
+                    fontWeight: "normal", 
+                    padding: "12px 16px", 
+                    textAlign: "center" 
+                  }}
                   sortDirection={orderBy === "streak" ? order : false}
                 >
                   <TableSortLabel
                     active={orderBy === "streak"}
                     direction={orderBy === "streak" ? order : "asc"}
                     onClick={() => handleRequestSort("streak")}
-                    sx={{ color: "white", "&.MuiTableSortLabel-active": { color: "white" }, "& .MuiTableSortLabel-icon": { color: "white !important" } }}
+                    sx={{ 
+                      color: isDark ? "#90caf9" : "white", 
+                      "&.MuiTableSortLabel-active": { color: isDark ? "#90caf9" : "white" }, 
+                      "& .MuiTableSortLabel-icon": { color: `${isDark ? "#90caf9" : "white"} !important` } 
+                    }}
                   >
                     Streak
                   </TableSortLabel>
@@ -566,8 +682,12 @@ export default function Watchdog() {
                 <TableRow
                   key={row.signalID}
                   sx={{
-                    "&:nth-of-type(odd)": { bgcolor: "rgba(0, 0, 0, 0.04)" },
-                    "&:hover": { bgcolor: "rgba(0, 0, 0, 0.08)" },
+                    "&:nth-of-type(odd)": { 
+                      bgcolor: isDark ? "rgba(255, 255, 255, 0.04)" : "rgba(0, 0, 0, 0.04)" 
+                    },
+                    "&:hover": { 
+                      bgcolor: isDark ? "rgba(255, 255, 255, 0.08)" : "rgba(0, 0, 0, 0.08)" 
+                    },
                   }}
                 >
                   <TableCell align="center">{row.zone}</TableCell>
@@ -608,88 +728,101 @@ export default function Watchdog() {
               <Box 
                 id="plot" 
                 ref={plotContainerRef} 
-                sx={{ flex: 1 }} 
+                sx={{ 
+                  flex: 1,
+                  width: '100%',
+                  height: '100%',
+                  minHeight: 400,
+                  overflow: 'hidden',
+                  position: 'relative'
+                }} 
               />
             </Box>
           )}
         </>
       )}
 
-      {/* Bottom Controls */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          p: 1,
-          borderTop: "1px solid rgba(224, 224, 224, 1)",
-        }}
-      >
-        {/* Export Button */}
-        <Button
-          variant="contained"
+      {/* Bottom Controls - Only show for table view */}
+      {view === "table" && (
+        <Box
           sx={{
-            backgroundColor: "#2196f3",
-            textTransform: "none",
-            borderRadius: 1,
-            boxShadow: 1,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            p: 1,
+            borderTop: `1px solid ${isDark ? 'rgba(255, 255, 255, 0.12)' : 'rgba(224, 224, 224, 1)'}`,
           }}
-          onClick={exportToExcel}
         >
-          Export To Excel
-        </Button>
-
-        {/* Pagination Controls */}
-        <Box sx={{ display: "flex", alignItems: "center" }}>
-          <Typography variant="body2" sx={{ mr: 1 }}>
-            Items per page:
-          </Typography>
-          <Select
-            value={rowsPerPage}
-            size="small"
-            onChange={(e) => setRowsPerPage(Number(e.target.value))}
+          {/* Export Button */}
+          <Button
+            variant="contained"
             sx={{
-              minWidth: 70,
-              height: 32,
-              mr: 2,
-              "& .MuiSelect-select": {
-                py: 0.5,
-              },
+              backgroundColor: isDark ? "#1976d2" : "#2196f3",
+              color: isDark ? "#ffffff" : "#ffffff",
+              textTransform: "none",
+              borderRadius: 1,
+              boxShadow: 1,
+              "&:hover": {
+                backgroundColor: isDark ? "#1565c0" : "#1976d2",
+              }
             }}
+            onClick={exportToExcel}
           >
-            <MenuItem value={10}>10</MenuItem>
-            <MenuItem value={25}>25</MenuItem>
-            <MenuItem value={50}>50</MenuItem>
-          </Select>
+            Export To Excel
+          </Button>
 
-          <Typography variant="body2" sx={{ mr: 2 }}>
-            {tableData.length > 0 ? `${page * rowsPerPage + 1}-${Math.min((page + 1) * rowsPerPage, tableData.length)} of ${tableData.length}` : "0-0 of 0"}
-          </Typography>
+          {/* Pagination Controls */}
+          <Box sx={{ display: "flex", alignItems: "center" }}>
+            <Typography variant="body2" sx={{ mr: 1 }}>
+              Items per page:
+            </Typography>
+            <Select
+              value={rowsPerPage}
+              size="small"
+              onChange={(e) => setRowsPerPage(Number(e.target.value))}
+              sx={{
+                minWidth: 70,
+                height: 32,
+                mr: 2,
+                "& .MuiSelect-select": {
+                  py: 0.5,
+                },
+              }}
+            >
+              <MenuItem value={10}>10</MenuItem>
+              <MenuItem value={25}>25</MenuItem>
+              <MenuItem value={50}>50</MenuItem>
+            </Select>
 
-          <Box sx={{ display: "flex" }}>
-            <IconButton size="small" disabled={page === 0} onClick={() => handleChangePage(0)}>
-              <FirstPageIcon />
-            </IconButton>
-            <IconButton size="small" disabled={page === 0} onClick={() => handleChangePage(page - 1)}>
-              <KeyboardArrowLeft />
-            </IconButton>
-            <IconButton
-              size="small"
-              disabled={page >= Math.ceil(tableData.length / rowsPerPage) - 1}
-              onClick={() => handleChangePage(page + 1)}
-            >
-              <KeyboardArrowRight />
-            </IconButton>
-            <IconButton
-              size="small"
-              disabled={page >= Math.ceil(tableData.length / rowsPerPage) - 1}
-              onClick={() => handleChangePage(Math.ceil(tableData.length / rowsPerPage) - 1)}
-            >
-              <LastPageIcon />
-            </IconButton>
+            <Typography variant="body2" sx={{ mr: 2 }}>
+              {tableData.length > 0 ? `${page * rowsPerPage + 1}-${Math.min((page + 1) * rowsPerPage, tableData.length)} of ${tableData.length}` : "0-0 of 0"}
+            </Typography>
+
+            <Box sx={{ display: "flex" }}>
+              <IconButton size="small" disabled={page === 0} onClick={() => handleChangePage(0)}>
+                <FirstPageIcon />
+              </IconButton>
+              <IconButton size="small" disabled={page === 0} onClick={() => handleChangePage(page - 1)}>
+                <KeyboardArrowLeft />
+              </IconButton>
+              <IconButton
+                size="small"
+                disabled={page >= Math.ceil(tableData.length / rowsPerPage) - 1}
+                onClick={() => handleChangePage(page + 1)}
+              >
+                <KeyboardArrowRight />
+              </IconButton>
+              <IconButton
+                size="small"
+                disabled={page >= Math.ceil(tableData.length / rowsPerPage) - 1}
+                onClick={() => handleChangePage(Math.ceil(tableData.length / rowsPerPage) - 1)}
+              >
+                <LastPageIcon />
+              </IconButton>
+            </Box>
           </Box>
         </Box>
-      </Box>
+      )}
 
 
     </Box>

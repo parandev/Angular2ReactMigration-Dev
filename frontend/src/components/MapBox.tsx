@@ -130,7 +130,7 @@ const MapBox: FC<MapBoxProps> = ({
   
   // Use theme-appropriate map style
   const themeMapStyle = isDark ? "carto-darkmatter" : mapStyle;
-  
+
   const containerRef = useRef<HTMLDivElement>(null);
   const plotRef = useRef<any>(null);
   const dispatch: AppDispatch = useDispatch();
@@ -184,7 +184,7 @@ const MapBox: FC<MapBoxProps> = ({
           x: 1,
           xanchor: 'right',
           y: 0.9,
-          bgcolor: isDark ? 'rgba(30, 30, 30, 0.8)' : 'rgba(255, 255, 255, 0.8)',
+          bgcolor: isDark ? 'rgba(30, 30, 30, 1)' : 'rgba(255, 255, 255, 1)',
           bordercolor: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
           borderwidth: 1
         }
@@ -251,6 +251,7 @@ const MapBox: FC<MapBoxProps> = ({
       legend: {
         ...prev.legend,
         ...currentThemeConfig.layout.legend,
+        bgcolor: isDark ? 'rgba(30, 30, 30, 1)' : 'rgba(255, 255, 255, 1)',
       },
       hoverlabel: currentThemeConfig.layout.hoverlabel,
       // Ensure critical layout properties are preserved (excluding xaxis/yaxis to avoid conflicts)
@@ -433,7 +434,7 @@ const MapBox: FC<MapBoxProps> = ({
 
     const allLats = mapData.flatMap(trace => trace.lat);
     const allLons = mapData.flatMap(trace => trace.lon);
-    
+
     if (allLats.length > 0 && allLons.length > 0) {
       const centerLat = average(allLats);
       const centerLon = average(allLons);
@@ -595,7 +596,8 @@ const MapBox: FC<MapBoxProps> = ({
     const zoomY = -1.446 * Math.log(widthY) + 8.2753;
     const zoomX = -1.415 * Math.log(widthX) + 9.7068;
     
-    return Math.min(zoomY, zoomX);
+    const zoomMin = Math.min(zoomY, zoomX);
+    return Math.max(zoomMin, 7);
   };
 
   return (
